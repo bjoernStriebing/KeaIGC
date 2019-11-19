@@ -1,10 +1,12 @@
 import serial
 import operator
-from binascii import hexlify
 from datetime import datetime, timedelta
 from functools import reduce
 
 from .misc import *
+
+__all__ = ['GpsDeviceBase', 'GpsCommand',
+           "crc_checksum", 'crc_checksum_hex']
 
 
 class ResponseIdentification(Struct):
@@ -45,7 +47,7 @@ class NMEAResponse(object):
 
     def is_valid(self):
         """Validate crc checksum against data."""
-        return self.checksum == _checksum(self.data)
+        return self.checksum == crc_checksum(self.data)
 
     def interprete(self):
         """Return actual response object depending on keyword in NMEA resonse."""
@@ -84,9 +86,9 @@ class GpsCommand(object):
         """Compose the NMEA message with data fiels and calculate checksum."""
         cmd_str = self.command + ','
         if self.data is not None:
-            cmd_str += ','.join(map(str, data))
+            cmd_str += ','.join(map(str, self.data))
             cmd_str += ','
-        return '$' + cmd_str + '*' + _checksum_hex(cmd_str)
+        return '$' + cmd_str + '*' + crc_checksum_hex(cmd_str)
 
 
 class GpsDeviceBase(object):
@@ -113,11 +115,13 @@ class GpsDeviceBase(object):
         This will set the receive mode for the next reply to "NMEA" or "BIN"
         according to command attributes.
         """
-        data = command.compose(data)
+        if data is not None:
+            command.data = data
+        cmd_str = str(command)
         self.mode = command.mode
-        self.io.write(data + '\r\n')
+        self.io.write(cmd_str + '\r\n')
         self.progress = 0.0 if command.response else 1.0
-        print '{:3.0f}%'.format(self.progress * 100), data
+        print '{:3.0f}%'.format(self.progress * 100), cmd_str
 
     def read(self, mode=None):
         """
@@ -147,72 +151,8 @@ class GpsDeviceBase(object):
 
     def _read_bin(self):
         """Read binary data transfer response from GPS device."""
-        packet_id = None
-        while True:
-            print '--------------------------------------------------------'
-            packet = map(ord, self.io.read(2))
-            packet_id = hexlify(bytearray(packet[0:2]))
-            if packet_id == 'a3a3':
-                'End of binary transmission\n'
-                break
-
-            packet += map(ord, self.io.read(1))
-            packet_length = packet[2]
-
-            packet += map(ord, self.io.read(packet_length))
-            packet_data = packet[3:]
-
-            packet += map(ord, self.io.read(1))
-            packet_crc = packet[-1]
-
-            if packet_id == 'a0a0':
-                print 'Flight Information Record\n'
-                print 'ID:      ', hexlify(bytearray(packet[0:2]))
-                print 'length:  ', packet[2]
-                print 'fw ver:  ', packet[3:5]
-                print 'hw ver:  ', packet[5:7]
-                print 'serial:  ', packet[7:11]
-                print 'P number:', ''.join(map(chr, packet[11:19]))
-                print 'P name:  ', ''.join(map(chr, packet[19:34]))
-                print 'G brand: ', ''.join(map(chr, packet[34:49]))
-                print 'G model: ', ''.join(map(chr, packet[49:64]))
-                print 'unknown: ', packet[64:66]
-                print 'CRC:     ', packet[66]
-            elif packet_id == 'a1a1':
-                print 'Key Track Position Record\n'
-                print 'ID:      ', hexlify(bytearray(packet[0:2]))
-                print 'length:  ', packet[2]
-                print 'fix flag:', packet[3]
-                print 'latitude:', int32(int(hexlify(bytearray(reversed(packet[4:8]))), 16)) / 60000.0
-                print 'lngitude:', int32(int(hexlify(bytearray(reversed(packet[8:12]))), 16)) / -60000.0
-                print 'altitude:', int16(int(hexlify(bytearray(reversed(packet[12:14]))), 16))
-                print 'baro:    ', int16(int(hexlify(bytearray(reversed(packet[14:16]))), 16))
-                print 'time:    ', datetime.utcfromtimestamp(int(hexlify(bytearray(reversed(packet[16:20]))), 16) + 946684800)
-                print 'CRC:     ', packet[20]
-                fix_count = 0
-            elif packet_id == 'a2a2':
-                offset = 0
-                for _ in range(0, packet_length, 6):
-                    print 'fix flag:', packet[offset + 3]
-                    print 'latitude:', int8(int(packet[offset + 4])) / 60000.0
-                    print 'lngitude:', int8(int(packet[offset + 5])) / 60000.0
-                    print 'altitude:', int8(int(packet[offset + 6]))
-                    print 'baro:    ', int8(int(packet[offset + 7]))
-                    print 'time:    ', int(packet[offset + 8])
-                    print ''
-                    offset += 6
-                    fix_count += 1
-                print 'REMAINDER', packet[offset+3:-1]
-                print 'Got {} fixes'.format(fix_count)
-
-            if packet_crc == _checksum([packet_length] + packet_data):
-                print '\nACK', packet_id, packet_length, 'crc', packet_crc
-                self.io.write(b'\xb1')
-            else:
-                print '\nNACK', packet_id, packet_length, 'crc', packet_crc, '<->', _checksum([packet_length] + packet_data)
-                self.io.write(b'\xb2')
-
-            print '--------------------------------------------------------\n\n'
+        # TODO: NotImplemented
+        pass
 
     def set_nav_off(self):
         """Stop sending current GPS fixes."""
@@ -231,7 +171,11 @@ class GpsDeviceBase(object):
         self.send(self._get_list)
         while self.progress < 1.0:
             response = self.read()
-            self.tracklist[response.num] = response
+            try:
+                self.tracklist[response.num] = response
+            except Exception as e:
+                pass
+                # print e
             print '{:3.0f}%'.format(self.progress * 100), response
 
     def get_flight(self, num):
@@ -242,10 +186,10 @@ class GpsDeviceBase(object):
             print 'Track number {} out of range'.format(num)
         flight_date = entry.datetime.strftime('%y%m%d%H%M%S')
         self.send(self._get_flight, data=[flight_date])
-        print self.read()
+        return self.read()
 
 
-def _checksum(data):
+def crc_checksum(data):
     """
     Compute CRC checksum.
 
@@ -260,7 +204,7 @@ def _checksum(data):
     return cs
 
 
-def _checksum_hex(data):
+def crc_checksum_hex(data):
     """
     Compute CRC checksum.
 
@@ -268,4 +212,4 @@ def _checksum_hex(data):
     Returns:
         string - checksum in hex format
     """
-    return '{:02X}'.format(_checksum(data))
+    return '{:02X}'.format(crc_checksum(data))

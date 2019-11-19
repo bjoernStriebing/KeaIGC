@@ -11,4 +11,8 @@ if __name__ == '__main__':
     gps.get_id()
     gps.get_list()
     if len(sys.argv) > 2:
-        gps.get_flight(sys.argv[2])
+        tracklog = gps.get_flight(sys.argv[2])
+
+        print ','.join(['num', 'latitude', 'longitude', 'altitude'])
+        for i, fix in enumerate(tracklog):
+            print ','.join(map(str, [i, fix.latitude, fix.longitude, fix.altitude_gps]))
