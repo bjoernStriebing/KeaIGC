@@ -21,7 +21,8 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
 
     def __init__(self, port, **kwargs):
         self.baudrate = self.BAUDRATE
-        super(GpsFlymaster, self).__init__(port)
+        # TODO: WIP disabled for faster testing
+        # super(GpsFlymaster, self).__init__(port)
 
     def _read_bin(self):
         """Read binary data transfer response from GPS device."""
@@ -92,6 +93,7 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
 
             print 'ACK', packet.id, packet.length, 'crc', packet.crc
             self.io.write(b'\xb1')
+            return fir, key_record, tracklog
             # print '--------------------------------------------------------\n\n'
 
 
