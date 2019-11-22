@@ -305,7 +305,6 @@ class DiffPositionRecord(PositionRecord):
         if ref_record is not None:
             self.__add__(ref_record)
 
-
     @property
     def latitude(self):
         return self._latitude / self.RADIANTS
