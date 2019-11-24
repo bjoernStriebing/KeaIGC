@@ -21,21 +21,21 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
 
     def __init__(self, port, **kwargs):
         self.baudrate = self.BAUDRATE
-        # TODO: WIP disabled for faster testing
-        # super(GpsFlymaster, self).__init__(port)
+        super(GpsFlymaster, self).__init__(port)
+        self.manufacturer = 'Flymaster'
 
-    def _read_bin(self):
+    def _read_bin(self, progress_done_count=None):
         """Read binary data transfer response from GPS device."""
         last_fix = None
         tracklog = None
+        key_record = None
         fix_count = 0
         while True:
             # print '--------------------------------------------------------'
             packet = BinPacket()
             packet.id = self.io.read(2)
             if packet.id == 'a3a3':
-                print 'End of binary transmission\n'
-                return tracklog
+                return fir, key_record, tracklog
             packet.length = self.io.read(1)
             packet.data = self.io.read(packet.length)
             packet.crc = self.io.read(1)
@@ -91,10 +91,13 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
                     last_fix = fix
                 # print 'Got {} fixes'.format(fix_count)
 
-            print 'ACK', packet.id, packet.length, 'crc', packet.crc
+            if progress_done_count is not None:
+                self.progress = float(fix_count) / progress_done_count
+                print '{:3.0f}%'.format(self.progress * 100), last_fix or fir
+                # print 'ACK', packet.id, packet.length, 'crc', packet.crc
             self.io.write(b'\xb1')
-            return fir, key_record, tracklog
-            # print '--------------------------------------------------------\n\n'
+        # print '--------------------------------------------------------\n\n'
+        # TODO break on error and returns
 
 
 class BinPacket(Struct):
@@ -199,6 +202,30 @@ class FlightInformationRecord(Struct):
     @glider_model.setter
     def glider_model(self, value):
         self._glider_model = ''.join(map(chr, value))
+
+    @property
+    def serial(self):
+        return self._serial
+
+    @serial.setter
+    def serial(self, value):
+        self._serial = sum([value[i] << 8 * i for i in range(len(value))])
+
+    @property
+    def firmware_version(self):
+        return self._firmware_version
+
+    @firmware_version.setter
+    def firmware_version(self, value):
+        self._firmware_version = '.'.join(map(str, value))
+
+    @property
+    def hardware_version(self):
+        return self._hardware_version
+
+    @hardware_version.setter
+    def hardware_version(self, value):
+        self._hardware_version = '.'.join(map(str, value))
 
 
 class PositionRecord(Struct, ConstantsFlymaster):

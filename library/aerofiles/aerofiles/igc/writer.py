@@ -10,7 +10,7 @@ class Writer:
 
     REQUIRED_HEADERS = [
         'manufacturer_code',
-        'logger_id',
+        # 'logger_id',
         'date',
         'logger_type',
         'gps_receiver',
@@ -18,6 +18,7 @@ class Writer:
 
     def __init__(self, fp=None):
         self.fp = fp
+        self._igc_text = ''
         self.fix_extensions = None
         self.k_record_extensions = None
 
@@ -77,7 +78,10 @@ class Writer:
             value, default='00000000E', is_latitude=False)
 
     def write_line(self, line):
-        self.fp.write((line + u'\r\n').encode('ascii', 'replace'))
+        igc_line = (line + u'\r\n').encode('ascii', 'replace')
+        self.fp.write(igc_line)
+        if line[0] in ('A', 'B', 'C', 'H'):
+            self._igc_text += igc_line
 
     def write_record(self, type, record):
         self.write_line(type + record)
@@ -110,9 +114,9 @@ class Writer:
             if not patterns.LOGGER_ID.match(logger_id):
                 raise ValueError('Invalid logger id')
 
-        record = '%s%s' % (manufacturer, logger_id)
+        record = '%s %s' % (manufacturer, logger_id)
         if extension:
-            record = record + extension
+            record = '%s %s' % (record, extension)
 
         self.write_record('A', record)
 
@@ -148,7 +152,7 @@ class Writer:
         :param date: a :class:`datetime.date` instance
         """
 
-        self.write_fr_header('DTE', self.format_date(date))
+        self.write_fr_header('DTE', self.format_date(date), subtype_long='DTEDATE')
 
     def write_fix_accuracy(self, accuracy=None):
         """
@@ -164,7 +168,7 @@ class Writer:
         """
 
         if accuracy is None:
-            accuracy = 500
+            return
 
         accuracy = int(accuracy)
         if not 0 < accuracy < 1000:
@@ -295,7 +299,7 @@ class Writer:
 
         :param gps_receiver: the GPS receiver information
         """
-        self.write_fr_header('GPS', gps_receiver)
+        self.write_fr_header('GPS', gps_receiver, subtype_long='GPSRECEIVER')
 
     def write_pressure_sensor(self, pressure_sensor):
         """
@@ -877,3 +881,6 @@ class Writer:
             raise ValueError('Invalid source')
 
         self.write_record('L', code + text)
+
+    def dump_text(self):
+        return self._igc_text

@@ -7,5 +7,5 @@ DATETIME = re.compile('^([0-3][0-9])([0-1][0-9])([0-9]{2})'
 
 THREE_LETTER_CODE = re.compile('^[A-Z0-9]{3}$')
 MANUFACTURER_CODE = THREE_LETTER_CODE
-LOGGER_ID = THREE_LETTER_CODE
+LOGGER_ID = re.compile('^[a-zA-Z0-9]+$')
 EXTENSION_CODE = THREE_LETTER_CODE
