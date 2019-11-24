@@ -1,5 +1,4 @@
 import vali as vali
-import private.save as save
 try:
     import private.save as save
     print "Imported private IGC signing source successfully"
