@@ -41,7 +41,7 @@ def _help():
 
 def _exit(code):
     print ResultStatus(code)
-    exit(code)
+    sys.exit(code)
 
 
 def main(argv):
@@ -51,15 +51,10 @@ def main(argv):
         _help()
         _exit(STATUS_ERR_FILE_OPEN)
 
-    import base64
-    from Crypto.Hash import SHA256
-    from Crypto.PublicKey import ECC
-    from Crypto.Signature import DSS
-
     sig_b64 = ''
     hash = SHA256.new()
 
-    with open(filename) as igc_file:
+    with open(filename, 'rb') as igc_file:
         line = igc_file.readline()
         if line.startswith('AXEA'):
             hash.update(line)
