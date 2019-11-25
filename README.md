@@ -1,16 +1,61 @@
-windows 32bit setup for vali-xea.exe
+# Kea GPS Downloader
 
-assuming parallel install of 32bit alongside existing 64 bit
-1) download python2.7.x.msi installer (32bit); select adding pyhton to path
-2) install to custom path: e.g. C:\python2.7_32
-3) rename C:\python2.7_32\python.exe to discern from 64 bit python: e.g. c:\python2.7_32\python_32.exe
-4) open cmd
-5) upgrade pip: python_32 -m pip install --upgrade pip
-6) install virtualenv: python_32 -m pip install virtualenv
-7) change into this project folder
-8) create virtualenv: python_32 -m virtualenv --no-site-packages venv
-9) activate virtualenv: venv\Scripts\activate
-10) install dependencies: pip install -r requirements_vali.txt
-----
-11) build vali win32 executable: pyinstaller --onefile vali.spec
-12) executable should be in dist\vali-xea.exe
+A simple and intuitive interface to download .igc files from your flight recorder to PC.
+Open source - if you have an instrument which is currently not supported I invite you to add to this project. ***Note: that's going to be anything that isn't a Flymaster at the moment, sorry!***
+
+#### Available for
+- [x] Mac OSX
+- [ ] Linux
+- [ ] Windows
+
+#### Screenshots
+*TBC*
+
+#### Installing
+*Simple disk image with app will be available shortly*
+
+
+## OSX Developer Setup Guide
+
+1. Install `python2.7` via homebrew and make sure it's added to your path
+1. `python -m pip install --upgrade pip`
+1. `python -m virtualenv --no-site-packages venv`
+1. `. venv/bin/activate`
+1. `pip install -r requirements_osx.txt`
+
+#### Start python app
+* List all flights: `./test_flymaster /dev/<tty.portname>`
+* Download flight from list: `./test_flymaster /dev/<tty.portname> <number>`
+
+#### Building the app
+Simply run `./build.sh [--save.so]`. This will do the following:
+* setup `PYTHONPATH` for building and clean any old outputs
+* compile and sign gps device `*.pyc` files to enable tracklog authentication
+* if `--so` argument is provided: compile private `igc/save.py` sources into shared library
+* compile the rest of the app
+* if `--dmg` argument is provided: create installer image
+
+*Note: A private key is required to sign new/modified GPS classes. If this is not present you can still compile and test your changes but any IGC files downloaded won't have the G-Record required to validate flight. This public key has to be authorised by me. This is to eliminate options for signing manipulated tracklogs.*
+
+
+
+## Windows Developer Setup Guide
+
+
+#### vali-xea.exe 32 bit Developer Setup
+
+The following assumes a parallel install of 32 bit python alongside existing 64 bit version
+1. Download `python2.7.x.msi` installer (32bit)
+1. Install to custom path: e.g. `C:\python2.7_32` while also selecting option to add python to your system path
+1. Rename `C:\python2.7_32\python.exe` to discern from 64 bit python: e.g. `C:\python2.7_32\python_32.exe`
+1. Open cmd
+1. Upgrade pip: `python_32 -m pip install --upgrade pip`
+1. Install virtualenv: `python_32 -m pip install virtualenv`
+1. Change into this project folder
+1. Create virtualenv: `python_32 -m virtualenv --no-site-packages venv`
+1. Activate virtualenv: `venv\Scripts\activate`
+1. Install dependencies: `pip install -r requirements_vali.txt`
+
+###### Building vali-xea.exe
+1. `pyinstaller --onefile vali.spec`
+1. Executable should be in `dist\vali-xea.exe`
