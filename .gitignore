@@ -1,7 +1,9 @@
 *~
+_*
 *.pyc
 *.log
 *.ini
 *.igc
 .DS_Store
 venv/
+build/

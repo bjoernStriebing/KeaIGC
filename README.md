@@ -28,7 +28,7 @@ Open source - if you have an instrument which is currently not supported I invit
 * Download flight from list: `./test_flymaster /dev/<tty.portname> <number>`
 
 #### Building the app
-Simply run `./build.sh [--save.so]`. This will do the following:
+Simply run `./packaging/build.sh [--so] [--dmg]`. This will do the following:
 * setup `PYTHONPATH` for building and clean any old outputs
 * compile and sign gps device `*.pyc` files to enable tracklog authentication
 * if `--so` argument is provided: compile private `igc/save.py` sources into shared library
