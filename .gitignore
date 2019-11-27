@@ -1,5 +1,6 @@
 *~
 _*
+!*/_*
 *.pyc
 *.log
 *.ini
@@ -7,3 +8,4 @@ _*
 .DS_Store
 venv/
 build/
+dist/
