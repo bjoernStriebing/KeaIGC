@@ -3,19 +3,22 @@
 import os
 import sys
 import time
+import logging
+import argparse
 from serial.serialutil import SerialException
 sys.path.append(os.path.dirname(__file__))
+logging.basicConfig(stream=sys.stdout)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 from igc import save as igc_save                                        # nopep8
 from gpsdevice import gpsflymaster                                      # nopep8
-
 
 if __name__ == '__main__':
     try:
         gps = gpsflymaster.GpsFlymaster(sys.argv[1])
     except SerialException as e:
-        # TODO logging
-        print e, '\n'
+        logger.critical(e)
         sys.exit(1)
     gps.set_nav_off()
     gps.get_id()

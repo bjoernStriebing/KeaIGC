@@ -1,4 +1,5 @@
 import serial
+import logging
 import operator
 from collections import Iterable
 from datetime import datetime, timedelta
@@ -8,6 +9,8 @@ from gpsdevice.gpsmisc import *
 
 __all__ = ['GpsDeviceBase', 'GpsCommand',
            "crc_checksum", 'crc_checksum_hex']
+
+logger = logging.getLogger()
 
 
 class ResponseIdentification(Struct):
@@ -43,6 +46,7 @@ class NMEAResponse(object):
         self.data, crc = stripped_data.split('*')
         self.checksum = int(crc, 16)
         if not self.is_valid():
+            logger.warning('{} response is invalid, crc mismatch'.format(self.__class__.__name__))
             return None
         return self.interprete()
 
@@ -73,7 +77,7 @@ class GpsCommand(object):
     """
 
     def __init__(self, command, response=True, data=None, mode='NMEA'):
-        """Init """
+        """Init."""
         self.command = command
         self.response = response
         self.data = data
@@ -102,7 +106,9 @@ class GpsDeviceBase(object):
 
     def __init__(self, port, **kwargs):
         """Initialise GPS device base class via serial port."""
+        logger.info('init GPS decvice on port {}'.format(port))
         self.io = serial.Serial(port=port, baudrate=self.baudrate, timeout=.5)
+        logger.debug('GPS device interface {}'.format(self.io))
         self.flush()
         self._manufacturer = None
         self._model = None
@@ -152,7 +158,7 @@ class GpsDeviceBase(object):
 
     def flush(self):
         """Empty serial buffer."""
-        print self.io.readlines()
+        logger.debug('{} buffer flush: {}'.format(self.__class__.__name__, self.io.readlines()))
 
     def send(self, command, data=None):
         """
@@ -168,9 +174,14 @@ class GpsDeviceBase(object):
                 command.data = data
         cmd_str = str(command)
         self.mode = command.mode
+        logger.info('{} send command: {}'.format(self.__class__.__name__, cmd_str))
+        if command.response:
+            self.progress = 0.0
+            logger.debug('{} receive mode is {}'.format(self.__class__.__name__, self.mode))
+        else:
+            self.progress = 1.0
+            logger.debug('{} receive mode is {} but no response expected'.format(self.__class__.__name__, self.mode))
         self.io.write(cmd_str + '\r\n')
-        self.progress = 0.0 if command.response else 1.0
-        print '{:3.0f}%'.format(self.progress * 100), cmd_str
 
     def read(self, mode=None, progress_done_count=None):
         """
@@ -184,24 +195,29 @@ class GpsDeviceBase(object):
             self.mode = mode
 
         if self.mode == 'NMEA':
-            return self._read_nmea()
+            response = self._read_nmea()
         elif self.mode == 'BIN':
-            return self._read_bin(progress_done_count=progress_done_count)
+            response = self._read_bin(progress_done_count=progress_done_count)
+        logger.info('{} NMEA response: {}'.format(self.__class__.__name__, response))
+        return response
 
     def _read_nmea(self):
         """Read a NMEA response from GPS device."""
         data = self.io.readline()
+        logger.debug('{} NMEA response raw data: {}'.format(self.__class__.__name__, data))
         response = NMEAResponse(self, data)
         try:
             return response.parse()
-        except ValueError:
+        except ValueError as e:
+            logger.debug('{} Exception while parsing response {}'.format(self.__class__.__name__, e))
             self.progress = 1.0
             return None
 
     def _read_bin(self, progress_done_count=None):
         """Read binary data transfer response from GPS device."""
         # TODO: NotImplemented
-        pass
+        logger.warning('{} BIN response not implemented'.format(self.__class__.__name__))
+        return None
 
     def set_nav_off(self):
         """Stop sending current GPS fixes."""
