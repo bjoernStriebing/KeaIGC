@@ -1,7 +1,7 @@
 from binascii import hexlify
 from datetime import datetime
-from .base import *
-from .misc import *
+from gpsdevice.gpsbase import *
+from gpsdevice.gpsmisc import *
 
 
 class ConstantsFlymaster(object):

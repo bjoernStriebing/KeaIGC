@@ -4,7 +4,7 @@ from collections import Iterable
 from datetime import datetime, timedelta
 from functools import reduce
 
-from .misc import *
+from gpsdevice.gpsmisc import *
 
 __all__ = ['GpsDeviceBase', 'GpsCommand',
            "crc_checksum", 'crc_checksum_hex']

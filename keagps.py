@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(__file__))
 from igc import save as igc_save                                        # nopep8
 from gpsdevice import gpsflymaster                                      # nopep8
 
+
 if __name__ == '__main__':
     try:
         gps = gpsflymaster.GpsFlymaster(sys.argv[1])

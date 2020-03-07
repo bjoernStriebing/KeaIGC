@@ -13,7 +13,7 @@ def sign_gpsdevices():
     sign_key = ECC.import_key(pk)
     signer = DSS.new(sign_key, 'fips-186-3')
 
-    for filename in glob(os.path.join(os.path.dirname(__file__), '*.pyc')):
+    for filename in glob(os.path.join(os.path.dirname(__file__), '*.so')):
         print 'Signing', filename
         with open(filename, 'rb') as pycfile:
             code = pycfile.read()
@@ -21,7 +21,7 @@ def sign_gpsdevices():
         hash = SHA256.new(code)
         signature = signer.sign(hash)
         signature_b64 = base64.urlsafe_b64encode(signature)
-        with open(filename[:-3] + 'sig', 'wb') as sigfile:
+        with open(filename[:-2] + 'sig', 'wb') as sigfile:
             sigfile.write(signature_b64)
     try:
         filename

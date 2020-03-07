@@ -7,11 +7,11 @@ block_cipher = None
 
 # dependencies = get_deps_all()
 
-a = Analysis(['../keagps.py'],
-             pathex=['../library/aerofiles'],
+a = Analysis(['keagps.py'],
+             pathex=['library/aerofiles'],
              binaries=[],
              datas=[],
-             hiddenimports=['Crypto.Cipher.Blowfish', 'library', 'aerofiles'],
+             hiddenimports=['Crypto.Cipher.Blowfish', 'library', 'aerofiles', 'gpsdevice.lib'],
              hookspath=[],
              runtime_hooks=[],
              excludes=['igc.private'],

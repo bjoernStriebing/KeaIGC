@@ -1,7 +1,7 @@
 from distutils.core import setup
 from Cython.Build import cythonize
 
-sourcefiles = ["igc/private/save.py"]
+sourcefiles = ["igc/_private/save.py"]
 try:
     setup(
         ext_modules=cythonize(sourcefiles,

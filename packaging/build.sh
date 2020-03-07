@@ -12,33 +12,39 @@ for i in "$@"; do
 done
 
 rm -rf build && mkdir build
-cd "$PACKAGING_DIR"
+rm -rf dist && mkdir dist
 
 # compile and sign GPS device classes
-rm ../gpsdevice/*.pyc ../gpsdevice/*.sig
-python -m compileall ../gpsdevice/
-python ../gpsdevice/_sign.py
+mv gpsdevice/lib/*.so gpsdevice/lib/*.sig
+cp "$PACKAGING_DIR/setup_gpsdevice.py" _setup_gpsdevice.py
+python _setup_gpsdevice.py build_ext --inplace
+python gpsdevice/_sign.py
+mv gpsdevice/*.so gpsdevice/*.sig gpsdevice/lib/
+rm _setup_gpsdevice.py*
 
 if $SHAREDOBJ; then
     # compile the igc signing library
-    cd ..
     rm igc/save.so
     cp "$PACKAGING_DIR/setup_igc_so.py" _setup_igc_so.py
     python _setup_igc_so.py build_ext --inplace
     rm _setup_igc_so.py*
     if [ $? -eq 0 ]; then
-        mv igc/private/save.so igc/save.so
+        mv igc/_private/save.so igc/save.so
     fi
-    cd "$PACKAGING_DIR"
 fi
 
+# mv igc/_private igc/__private
+
 # build the actual app
+cp "$PACKAGING_DIR/keagps.spec" _keagps.spec
 pyinstaller \
     -y \
     --debug all \
-    --distpath="../dist" \
-    --workpath="../build" \
-    keagps.spec
+    --distpath="dist" \
+    --workpath="build" \
+    _keagps.spec
+rm _keagps.spec
+# mv igc/__private igc/_private
 
 if $DMGIMAGE; then
     # update installer

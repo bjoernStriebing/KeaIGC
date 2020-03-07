@@ -1,7 +1,7 @@
 # Kea GPS Downloader
 
 A simple and intuitive interface to download .igc files from your flight recorder to PC.
-Open source - if you have an instrument which is currently not supported I invite you to add to this project. ***Note: that's going to be anything that isn't a Flymaster at the moment, sorry!***
+Open source - if you have an instrument which is currently not supported I invite you to add to this project. ***Note: that is anything that isn't a Flymaster at the moment, sorry!***
 
 #### Available for
 - [x] Mac OSX
@@ -24,7 +24,7 @@ Open source - if you have an instrument which is currently not supported I invit
 1. `pip install -r requirements_osx.txt`
 
 #### Start python app
-* List all flights: `./test_flymaster /dev/<tty.portname>`
+* List all flights: `./dist/test_flymaster /dev/<tty.portname>`
 * Download flight from list: `./test_flymaster /dev/<tty.portname> <number>`
 
 #### Building the app
@@ -35,8 +35,7 @@ Simply run `./packaging/build.sh [--so] [--dmg]`. This will do the following:
 * compile the rest of the app
 * if `--dmg` argument is provided: create installer image
 
-*Note: A private key is required to sign new/modified GPS classes. If this is not present you can still compile and test your changes but any IGC files downloaded won't have the G-Record required to validate flight. This public key has to be authorised by me. This is to eliminate options for signing manipulated tracklogs.*
-
+*Note: New or modified GPS classes require a private key signature. You can still compile and test your changes with the private key but any IGC files downloaded won't have the G-Record required to validate flights. When merging in your pull requests I will review your code and sign the GPS device library compiled from it. This may seem inconvenient but is necessary to ensure tracklogs can not be manipulated and signed with Kea GPS Downloader key*
 
 
 ## Windows Developer Setup Guide
