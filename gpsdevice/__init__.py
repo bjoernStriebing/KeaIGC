@@ -1,4 +1,8 @@
+import os
 import sys
+import pkgutil
+
+__all__ = ['GpsDevices']
 
 if getattr(sys, 'frozen', False):
     import lib.gpsmisc as gpsmisc
@@ -13,3 +17,14 @@ else:
     from . import gpsmisc
     from . import gpsbase
     from . import gpsflymaster
+
+GpsDevices = []
+
+pkgpath = os.path.dirname(__file__)
+for _, name, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
+    try:
+        module = eval(name)
+        if module.implements_gps_device(module.__name__):
+            GpsDevices.append(module)
+    except Exception:
+        pass

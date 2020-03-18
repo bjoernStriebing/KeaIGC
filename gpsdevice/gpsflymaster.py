@@ -5,6 +5,9 @@ from gpsdevice.gpsmisc import *
 
 
 class ConstantsFlymaster(object):
+    GUI_NAME = "Flymaster"
+    MANUFACTURER_NAMES = ["Flymaster"]
+    MODEL_NAMES = ["GpsSD"]
     BAUDRATE = 57600
     EPOCH2000 = 946684800
     RADIANTS = 60000.0
@@ -23,6 +26,18 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
         self.baudrate = self.BAUDRATE
         super(GpsFlymaster, self).__init__(port)
         self.manufacturer = 'Flymaster'
+
+    @property
+    def io(self):
+        return super(GpsFlymaster, self).io
+
+    @io.setter
+    def io(self, port):
+        super(GpsFlymaster, self.__class__).io.fset(self, port)
+        if port is not None:
+            self.set_nav_off()
+            self.get_id()
+            self.validate_id()
 
     def _read_bin(self, progress_done_count=None):
         """Read binary data transfer response from GPS device."""

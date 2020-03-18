@@ -1,14 +1,19 @@
 import serial
 import logging
 import operator
+import threadin
+from serial import SerialException
 from collections import Iterable
 from datetime import datetime, timedelta
 from functools import reduce
+import __main__ as main
+
 
 from gpsdevice.gpsmisc import *
 
 __all__ = ['GpsDeviceBase', 'GpsCommand',
-           "crc_checksum", 'crc_checksum_hex']
+           'crc_checksum', 'crc_checksum_hex',
+           'implements_gps_device', 'get_class', 'get_name']
 
 logger = logging.getLogger()
 
@@ -106,15 +111,26 @@ class GpsDeviceBase(object):
 
     def __init__(self, port, **kwargs):
         """Initialise GPS device base class via serial port."""
-        logger.info('init GPS decvice on port {}'.format(port))
-        self.io = serial.Serial(port=port, baudrate=self.baudrate, timeout=.5)
-        logger.debug('GPS device interface {}'.format(self.io))
-        self.flush()
+        self.io = port
         self._manufacturer = None
         self._model = None
         self._serial = None
         self._fw_version = None
         self._gps_receiver = None
+
+    @property
+    def io(self):
+        return self._io
+
+    @io.setter
+    def io(self, port):
+        logger.info('GPS decvice on port {}'.format(port))
+        try:
+            self._io = serial.Serial(port=port, baudrate=self.baudrate, timeout=.5)
+            self.flush()
+        except SerialException:
+            return
+        logger.debug('GPS device interface {}'.format(self._io))
 
     @property
     def manufacturer(self):
@@ -233,7 +249,15 @@ class GpsDeviceBase(object):
             self.fw_version = response.fw_version
             print '{:3.0f}%'.format(self.progress * 100), response
 
-    def get_list(self):
+    def validate_id(self):
+        if self.manufacturer not in self.MANUFACTURER_NAMES:
+            raise ValueError('Manufacturer "{}" does not match {} GPS device.'.format(
+                self.manufacturer, self.GUI_NAME))
+        if self.model not in self.MODEL_NAMES:
+            raise ValueError('Model {} does not match {} GPS device.'.format(
+                self.model, self.GUI_NAME))
+
+    def get_list(self, callback=None):
         """Get NMEA GPS Tracklist."""
         self.tracklist = {}
         self.send(self._get_list)
@@ -282,3 +306,18 @@ def crc_checksum_hex(data):
         string - checksum in hex format
     """
     return '{:02X}'.format(crc_checksum(data))
+
+
+def implements_gps_device(external_name):
+    return external_name != __name__
+
+
+def get_name(device):
+    return device.__name__.split('.')[-1]
+
+
+def get_class(device):
+    name = get_name(device)
+    for c in dir(device):
+        if c.lower() == name:
+            return vars(device)[c]
