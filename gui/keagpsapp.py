@@ -29,6 +29,7 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
         self.current = 'ports'
 
     def port_selected(self, button, port):
+        print button.text, port
         try:
             self.gps.io = port
         except (SerialException, AttributeError, ValueError):

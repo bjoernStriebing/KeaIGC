@@ -1,3 +1,4 @@
+import Queue as queue
 from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
@@ -27,7 +28,7 @@ Builder.load_string("""
             height: self.minimum_height
             GuiButton:
                 text: "Back"
-                disabled: True
+                on_release: Clock.schedule_once(lambda dt: root.go_back())
 """)
 
 
@@ -39,7 +40,21 @@ class FlightListScreen(Screen):
 
     def list_flights(self):
         self.ids.list_bl.clear_widgets()
-        self.manager.gps.get_list()
-        tracklist = self.manager.gps.tracklist
-        for t in tracklist:
-            self.ids.list_bl.add_widget(GuiButton(text=str(t)))
+        self.flight_queue = queue.Queue()
+        self.manager.gps.get_list(result_queue=self.flight_queue)
+        self.polling = Clock.schedule_interval(lambda dt: self.add_flight(), .02)
+        # tracklist = self.manager.gps.tracklist
+        # for t in tracklist:
+        #     self.ids.list_bl.add_widget(GuiButton(text=str(t)))
+
+    def add_flight(self):
+        try:
+            progress, flight = self.flight_queue.get_nowait()
+        except queue.Empty:
+            return
+        if progress >= 1.0:
+            self.polling.cancel()
+        self.ids.list_bl.add_widget(GuiButton(text=str(flight)))
+
+    def go_back(self, *largs):
+        self.manager.current = 'ports'

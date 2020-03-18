@@ -58,7 +58,7 @@ class SerialScreen(Screen):
         for port in glob('/dev/tty.*'):
             self.ids.list_bl.add_widget(
                 GuiButton(text=os.path.basename(port),
-                          on_release=lambda x: Clock.schedule_once(lambda dt: self.manager.port_selected(x, port))))
+                          on_release=lambda x, p=port: Clock.schedule_once(lambda dt: self.manager.port_selected(x, p))))
 
     def go_back(self, *largs):
         self.manager.current = 'devices'

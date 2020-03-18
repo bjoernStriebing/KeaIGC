@@ -1,7 +1,7 @@
 import serial
 import logging
 import operator
-import threadin
+import threading
 from serial import SerialException
 from collections import Iterable
 from datetime import datetime, timedelta
@@ -257,14 +257,29 @@ class GpsDeviceBase(object):
             raise ValueError('Model {} does not match {} GPS device.'.format(
                 self.model, self.GUI_NAME))
 
-    def get_list(self, callback=None):
+    def get_list(self, result_queue=None):
         """Get NMEA GPS Tracklist."""
         self.tracklist = {}
+
+        if result_queue is not None:
+            threading.Thread(target=self._get_list_threaded, args=(result_queue,)).start()
+            return
+
         self.send(self._get_list)
         while self.progress < 1.0:
             response = self.read()
             try:
                 self.tracklist[response.num] = response
+            except Exception as e:
+                pass
+                # print e
+
+    def _get_list_threaded(self, result_queue):
+        self.send(self._get_list)
+        while self.progress < 1.0:
+            response = self.read()
+            try:
+                result_queue.put((self.progress, response))
             except Exception as e:
                 pass
                 # print e
