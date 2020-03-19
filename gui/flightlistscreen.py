@@ -1,14 +1,18 @@
+import pytz
 import Queue as queue
+from tzlocal import get_localzone
 from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
+from kivy.uix.scrollview import ScrollView
 from kivy.metrics import *
 
 from common import GuiLabel, GuiButton
 import gpsdevice
 
+local_tz = get_localzone()
 
 Builder.load_string("""
 <FlightListScreen>:
@@ -18,17 +22,27 @@ Builder.load_string("""
         spacing: dp(7)
         GuiLabel:
             size_hint: 1, None
-            height: dp(60)
+            height: dp(40)
             text: "Select flights from list below"
-        GuiGridLayout:
-            id: list_bl
+        ScrollView:
+            bar_width: 3
+            scroll_distance: dp(20)
+            scroll_wheel_distance: dp(20)
+            smooth_scroll_end: 8
+            GuiGridLayout:
+                id: list_bl
+                size_hint_y: None
+                height: self.minimum_height
         BoxLayout:
             id: buttom
             size_hint: 1, None
             height: self.minimum_height
+            spacing: dp(7)
             GuiButton:
                 text: "Back"
                 on_release: Clock.schedule_once(lambda dt: root.go_back())
+            GuiButton:
+                text: "Download"
 """)
 
 
@@ -43,9 +57,6 @@ class FlightListScreen(Screen):
         self.flight_queue = queue.Queue()
         self.manager.gps.get_list(result_queue=self.flight_queue)
         self.polling = Clock.schedule_interval(lambda dt: self.add_flight(), .02)
-        # tracklist = self.manager.gps.tracklist
-        # for t in tracklist:
-        #     self.ids.list_bl.add_widget(GuiButton(text=str(t)))
 
     def add_flight(self):
         try:
@@ -54,7 +65,15 @@ class FlightListScreen(Screen):
             return
         if progress >= 1.0:
             self.polling.cancel()
-        self.ids.list_bl.add_widget(GuiButton(text=str(flight)))
+        self.manager.gps.tracklist[flight.num] = flight
+        date_str = utc_to_local(flight.datetime).strftime("%A\n%d %b %Y\n%H:%M")
+        self.ids.list_bl.add_widget(
+            GuiButton(text=date_str,
+                      on_release=lambda x, n=flight.num: Clock.schedule_once(lambda dt: self.manager.download_flight(n))))
 
     def go_back(self, *largs):
         self.manager.current = 'ports'
+
+
+def utc_to_local(utc_dt):
+    return utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)

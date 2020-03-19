@@ -17,10 +17,17 @@ Builder.load_string("""
         spacing: dp(7)
         GuiLabel:
             size_hint: 1, None
-            height: dp(60)
+            height: dp(40)
             text: "Select your type of GPS device"
-        GuiGridLayout:
-            id: list_bl
+        ScrollView:
+            bar_width: 3
+            scroll_distance: dp(20)
+            scroll_wheel_distance: dp(20)
+            smooth_scroll_end: 8
+            GuiGridLayout:
+                id: list_bl
+                size_hint_y: None
+                height: self.minimum_height
         BoxLayout:
             id: buttom
             size_hint: 1, None

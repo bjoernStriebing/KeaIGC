@@ -6,6 +6,7 @@ from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
+from kivy.uix.scrollview import ScrollView
 from kivy.metrics import *
 
 from common import GuiLabel, GuiButton
@@ -28,10 +29,17 @@ Builder.load_string("""
         spacing: dp(7)
         GuiLabel:
             size_hint: 1, None
-            height: dp(60)
+            height: dp(40)
             text: "Please select the Port your GPS device is connected to"
-        GuiGridLayout:
-            id: list_bl
+        ScrollView:
+            bar_width: 3
+            scroll_distance: dp(20)
+            scroll_wheel_distance: dp(20)
+            smooth_scroll_end: 8
+            GuiGridLayout:
+                id: list_bl
+                size_hint_y: None
+                height: self.minimum_height
         BoxLayout:
             id: buttom
             size_hint: 1, None

@@ -4,6 +4,7 @@ from serial import SerialException
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 
+from igc import save as igc_save
 from gpsclassscreen import GpsClassScreen
 from serialscreen import SerialScreen
 from flightlistscreen import FlightListScreen
@@ -38,6 +39,13 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
                 port, self.gps.__class__.GUI_NAME), caller=self)
             return
         self.current = 'flightlist'
+
+    def download_flight(self, flight):
+        try:
+            target_file = os.path.expanduser('~/Desktop/{}.igc'.format(self.gps.GUI_NAME))
+            igc_save.download(self.gps, flight, target_file)
+        except igc_save.UnsignedIGCException:
+            MessagePopup("IGC file wasn't signed because there was a problem validating the GPS module")
 
 
 class KeaGpsApp(App):
