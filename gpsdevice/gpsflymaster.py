@@ -169,7 +169,11 @@ class BinPacket(Struct):
 
     @crc.setter
     def crc(self, value):
-        crc = ord(value)
+        print type(value), value
+        try:
+            crc = ord(value)
+        except TypeError:
+            crc = 0
         i = self._payload_offset + self.length
         self.__data[i] = crc
         self._valid = (crc == crc_checksum([self.length] + self.data))

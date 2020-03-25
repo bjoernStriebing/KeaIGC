@@ -27,10 +27,8 @@ Builder.load_string("""
 <GuiButton>:
     size_hint: 1, None
     height: dp(60)
-    background_color: .9, .9, .9, 1
-    background_normal_color: .9, .9, .9, 1
-    background_normal: "gui/img/whiteColour.png"
-    background_down_color: 1, 1, 1, 1
+    background_color: 1, 1, 1, 1
+    background_normal: "gui/img/g85.png"
     background_down: "gui/img/highlightColour.png"
 """)
 
@@ -38,13 +36,13 @@ Builder.load_string("""
 class GuiButton(Button, GuiColor):
 
     def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            self.set_background_color(self.background_down_color)
+        # if self.collide_point(*touch.pos):
+        #     self.set_background_color(self.background_down_color)
         super(GuiButton, self).on_touch_down(touch)
 
     def on_touch_up(self, touch):
         # if self.collide_point(*touch.pos):
-        self.set_background_color(self.background_normal_color)
+        # self.set_background_color(self.background_normal_color)
         super(GuiButton, self).on_touch_up(touch)
 
     def set_background_color(self, color):

@@ -2,7 +2,7 @@ import pytz
 import Queue as queue
 from tzlocal import get_localzone
 from kivy.lang import Builder
-from kivy.clock import Clock
+from kivy.clock import Clock, mainthread
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
@@ -50,22 +50,22 @@ class FlightListScreen(Screen):
 
     def on_pre_enter(self, **kwargs):
         super(FlightListScreen, self).on_pre_enter(**kwargs)
-        Clock.schedule_once(lambda dt: self.list_flights())
+        self.list_flights()
 
     def list_flights(self):
         self.ids.list_bl.clear_widgets()
-        self.flight_queue = queue.Queue()
-        self.manager.gps.get_list(result_queue=self.flight_queue)
-        self.polling = Clock.schedule_interval(lambda dt: self.add_flight(), .02)
+        self.manager.gps.get_list()
 
-    def add_flight(self):
+    @mainthread
+    def add_flights(self, flight_queue):
         try:
-            progress, flight = self.flight_queue.get_nowait()
+            progress, flight = flight_queue.get_nowait()
         except queue.Empty:
+            Clock.schedule_once(lambda dt: self.add_flights(flight_queue), .02)
             return
-        if progress >= 1.0:
-            self.polling.cancel()
-        self.manager.gps.tracklist[flight.num] = flight
+        if progress < 1.0:
+            Clock.schedule_once(lambda dt: self.add_flights(flight_queue), .02)
+        # add a button for the flight
         date_str = utc_to_local(flight.datetime).strftime("%A\n%d %b %Y\n%H:%M")
         self.ids.list_bl.add_widget(
             GuiButton(text=date_str,

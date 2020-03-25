@@ -1,5 +1,6 @@
 import os
 from glob import glob
+from functools import partial
 
 from kivy.lang import Builder
 from kivy.clock import Clock
@@ -64,9 +65,12 @@ class SerialScreen(Screen):
         self.ids.list_bl.clear_widgets()
         # FIXME: should use proper serial enumerations
         for port in glob('/dev/tty.*'):
-            self.ids.list_bl.add_widget(
-                GuiButton(text=os.path.basename(port),
-                          on_release=lambda x, p=port: Clock.schedule_once(lambda dt: self.manager.port_selected(x, p))))
+            b = GuiButton(text=os.path.basename(port))
+            b.bind(on_release=partial(self.manager.port_selected, port=port))
+            self.ids.list_bl.add_widget(b)
+            # self.ids.list_bl.add_widget(
+            #     GuiButton(text=os.path.basename(port),
+            #               on_release=lambda x, p=port: Clock.schedule_once(lambda dt: self.manager.port_selected(x, p))))
 
     def go_back(self, *largs):
         self.manager.current = 'devices'

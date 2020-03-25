@@ -257,32 +257,15 @@ class GpsDeviceBase(object):
             raise ValueError('Model {} does not match {} GPS device.'.format(
                 self.model, self.GUI_NAME))
 
-    def get_list(self, result_queue=None):
+    def get_list(self, ret_queue=None):
         """Get NMEA GPS Tracklist."""
         self.tracklist = {}
-
-        if result_queue is not None:
-            threading.Thread(target=self._get_list_threaded, args=(result_queue,)).start()
-            return
-
         self.send(self._get_list)
         while self.progress < 1.0:
             response = self.read()
-            try:
-                self.tracklist[response.num] = response
-            except Exception as e:
-                pass
-                # print e
-
-    def _get_list_threaded(self, result_queue):
-        self.send(self._get_list)
-        while self.progress < 1.0:
-            response = self.read()
-            try:
-                result_queue.put((self.progress, response))
-            except Exception as e:
-                pass
-                # print e
+            self.tracklist[response.num] = response
+            if ret_queue is not None:
+                ret_queue.put((self.progress, response))
             print '{:3.0f}%'.format(self.progress * 100), response
 
     def get_flight(self, num):
