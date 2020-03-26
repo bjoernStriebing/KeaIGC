@@ -101,11 +101,16 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
             self.busy.start(rect)
 
     def done(self):
+        if not self.gps.joblist.empty():
+            return
         animation = self.busy
         self.busy = None
         header = self.current_screen.ids.header
         for rect in header.canvas.before.get_group('bar'):
-            animation.stop(rect)
+            try:
+                animation.stop(rect)
+            except AttributeError:
+                pass
 
     @mainthread
     def show_flights(self):
