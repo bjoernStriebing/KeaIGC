@@ -47,6 +47,9 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
     def download_flight_header(self, flight):
         self.gps.download_flight_header(flight=flight)
 
+    def download_flight(self, flight):
+        self.gps.download_flight(flight=flight)
+
     def is_busy(self):
         return self.busy is not None
 
@@ -97,6 +100,11 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
         screen.show_map(flight_brief_header)
 
     @mainthread
+    def unselect_flight(self, flight):
+        screen = self.get_screen('flightlist')
+        screen.unselect_flight(flight)
+
+    @mainthread
     def show_flights(self):
         self.current = 'flightlist'
 
@@ -121,6 +129,7 @@ class GpsInterface(Thread):
         super(GpsInterface, self).__init__(target=self._target_func,
                                            args=(device, self.joblist), **kwargs)
         self.daemon = True
+        self.polling = None
         self.start()
 
     def _threaded(func):
@@ -147,19 +156,23 @@ class GpsInterface(Thread):
         Clock.schedule_once(lambda dt: self.gui.current_screen.add_flights(self.results), .02)
         self.gps.get_list(ret_queue=self.results)
 
+    @_threaded
     def download_flight_header(self, flight):
-        Clock.schedule_once(lambda dt: self._poll_progress())
+        if self.polling is None:
+            self.poppling = Clock.schedule_once(lambda dt: self._poll_progress())
         header = self.gps.get_flight_brief(flight)
         self.gui.show_map(header)
 
-    # @_threaded
-    # def download_flight(self, flight):
-    #     Clock.schedule_once(lambda dt: self._poll_progress(), .05)
-    #     try:
-    #         target_file = os.path.expanduser('~/Desktop/{}.igc'.format(self.gps.GUI_NAME))
-    #         igc_save.download(self.gps, flight, target_file)
-    #     except igc_save.UnsignedIGCException:
-    #         self.gui.show_message("IGC file wasn't signed because there was a problem validating the GPS module")
+    @_threaded
+    def download_flight(self, flight):
+        if self.polling is None:
+            Clock.schedule_once(lambda dt: self._poll_progress(), .05)
+        try:
+            target_file = os.path.expanduser('~/Desktop/{}.igc'.format(self.gps.GUI_NAME))
+            igc_save.download(self.gps, flight, target_file)
+        except igc_save.UnsignedIGCException:
+            self.gui.show_message("IGC file wasn't signed because there was a problem validating the GPS module")
+        self.gui.unselect_flight(flight)
 
     def _target_func(self, device, joblist):
         self.gps = device.get_class(device)(port=None)
@@ -174,7 +187,9 @@ class GpsInterface(Thread):
         progress = self.gps.progress
         self.gui.busy_progress(progress)
         if progress < 1.0:
-            Clock.schedule_once(lambda dt: self._poll_progress(), .05)
+            self.polling = Clock.schedule_once(lambda dt: self._poll_progress(), .05)
+        else:
+            self.polling = None
 
 
 if __name__ == '__main__':

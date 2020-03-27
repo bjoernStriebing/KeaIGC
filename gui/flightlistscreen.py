@@ -8,7 +8,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
-from kivy.properties import ObjectProperty
+from kivy.properties import ListProperty, ObjectProperty
 from kivy.metrics import *
 
 from common import GuiLabel, GuiButton, GuiSelsectButton
@@ -41,6 +41,7 @@ Builder.load_string("""
                     size_hint_y: None
                     height: self.minimum_height
                     padding: 0, 0, dp(3.5), 0
+                    update_selected: root.update_selected
             BoxLayout:
                 id: mapbox
                 size_hint: .5, 1
@@ -61,14 +62,20 @@ Builder.load_string("""
             GuiButton:
                 id: download_button
                 text: "Download"
-                disabled: True
+                disabled: len(root.download_list) == 0
+                on_release: root.download()
 """)
 
 
 class FlightListScreen(Screen):
     map_marker = ObjectProperty(None)
+    download_list = ListProperty([])
 
-    def on_pre_enter(self, **kwargs):
+    def __init__(self, **kwargs):
+        super(FlightListScreen, self).__init__(**kwargs)
+        self.active_download_list = []
+
+    def on_enter(self, **kwargs):
         super(FlightListScreen, self).on_pre_enter(**kwargs)
         self.list_flights()
 
@@ -89,20 +96,16 @@ class FlightListScreen(Screen):
         # add a button for the flight
         date_str = utc_to_local(flight.datetime).strftime("%A\n%d %b %Y\n%H:%M")
         self.ids.list_bl.add_widget(
-            GuiSelsectButton(text=date_str,
+            GuiSelsectButton(text=date_str, data=flight.num,
                              on_release=lambda x, n=flight.num:
                                  Clock.schedule_once(lambda dt: self.manager.download_flight_header(n))))
 
     def go_back(self, *largs):
         self.manager.current = 'ports'
 
-    def enable_dl_button(self):
-        self.ids.download_button.disabled = False
-
     def show_map(self, flight_brief_header):
         shrink = animation.animate_size(.5, 1, use_hint=True, duration=.6)
         slide = animation.animate_pos(.5, 0, use_hint=True, duration=.6)
-        slide.bind(on_complete=lambda *_: self.enable_dl_button())
         shrink.start(self.ids.listbox)
         slide.start(self.ids.mapbox)
 
@@ -120,6 +123,29 @@ class FlightListScreen(Screen):
             map.center_on(marker.lat,
                           marker.lon)
             map.zoom = 13
+
+    def update_selected(self, button, selected):
+        if button in self.active_download_list:
+            return
+        if selected:
+            self.download_list.append(button)
+        else:
+            self.download_list.remove(button)
+        if self.download_list is None:
+            self.download_list = []
+
+    def download(self):
+        for button in self.download_list:
+            self.manager.download_flight(button.data)
+            self.active_download_list.append(button)
+
+    def unselect_flight(self, flight):
+        for button in self.download_list:
+            if button.data == flight:
+                self.active_download_list.remove(button)
+                button.selected = False
+        if self.active_download_list is None:
+            self.active_download_list = []
 
 
 def utc_to_local(utc_dt):

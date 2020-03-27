@@ -2,7 +2,7 @@ from kivy.lang import Builder
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
-from kivy.properties import BooleanProperty, NumericProperty
+from kivy.properties import BooleanProperty, NumericProperty, ObjectProperty
 from kivy.metrics import *
 
 Builder.load_string("""
@@ -34,6 +34,7 @@ Builder.load_string("""
 
 
 class GuiButton(Button, GuiColor):
+    data = ObjectProperty(None)
     pass
 
 
@@ -50,6 +51,10 @@ class GuiSelsectButton(GuiButton):
             self.background_normal = self.background_down
         else:
             self.background_normal = self._bg_normal
+        try:
+            self.parent.update_selected(self, selected)
+        except AttributeError:
+            pass
 
 
 Builder.load_string("""

@@ -50,11 +50,17 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
             packet = BinPacket()
             packet.id = self.io.read(2)
             if packet.id == 'a3a3':
-                return fir, key_record, tracklog
+                self.io.write(b'\xb1')
+                try:
+                    return fir, key_record, tracklog
+                except UnboundLocalError:
+                    return self._fir, self._kr, tracklog
             elif packet.id == '0000':
                 # undocumented mystery packet sent between consecutive downloads
-                # politly knod and smile so we get to the actual data
-                print packet
+                # first listen to all it has to say
+                # then politly knod and smile so we get to the actual data
+                while self.io.read(1):
+                    pass
                 self.io.write(b'\xb1')
                 continue
             packet.length = self.io.read(1)
@@ -70,7 +76,7 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
 
             if packet.id == 'a0a0':
                 # print 'Flight Information Record\n'
-                fir = FlightInformationRecord(packet)
+                fir = self._fir = FlightInformationRecord(packet)
                 # print 'ID:      ', packet.id
                 # print 'length:  ', packet.length
                 # print 'fw ver:  ', fir.firmware_version
@@ -83,8 +89,8 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
                 # print 'CRC:     ', packet.crc
             elif packet.id == 'a1a1':
                 # print 'Key Track Position Record\n'
-                last_fix = key_record = KeyTrackPositionRecord(packet)
-                tracklog = [key_record]
+                last_fix = self._kr = key_record = KeyTrackPositionRecord(packet)
+                tracklog = self._tl = [key_record]
                 fix_count = 1
                 # print 'ID:      ', packet.id
                 # print 'length:  ', packet.length
@@ -103,7 +109,10 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
                 offset = 0
                 for _ in range(0, packet.length, 6):
                     fix = DiffPositionRecord(packet, offset=offset, ref_record=last_fix)
-                    tracklog.append(fix)
+                    try:
+                        tracklog.append(fix)
+                    except AttributeError:
+                        tracklog.append(fix)
                     # print 'fix flag:', fix.fix_flag
                     # print 'latitude:', fix.latitude
                     # print 'lngitude:', fix.longitude
