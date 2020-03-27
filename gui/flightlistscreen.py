@@ -9,7 +9,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
 from kivy.metrics import *
 
-from common import GuiLabel, GuiButton
+from common import GuiLabel, GuiButton, GuiSelsectButton
 import gpsdevice
 
 local_tz = get_localzone()
@@ -20,9 +20,8 @@ Builder.load_string("""
         orientation: "vertical"
         padding: dp(12)
         spacing: dp(7)
-        GuiLabel:
-            size_hint: 1, None
-            height: dp(40)
+        ScreenHeader:
+            id: header
             text: "Select flights from list below"
         ScrollView:
             bar_width: 3
@@ -63,13 +62,15 @@ class FlightListScreen(Screen):
         except queue.Empty:
             Clock.schedule_once(lambda dt: self.add_flights(flight_queue), .02)
             return
+        self.manager.busy_progress(progress)
         if progress < 1.0:
             Clock.schedule_once(lambda dt: self.add_flights(flight_queue), .02)
         # add a button for the flight
         date_str = utc_to_local(flight.datetime).strftime("%A\n%d %b %Y\n%H:%M")
         self.ids.list_bl.add_widget(
-            GuiButton(text=date_str,
-                      on_release=lambda x, n=flight.num: Clock.schedule_once(lambda dt: self.manager.download_flight(n))))
+            GuiSelsectButton(text=date_str,
+                             on_release=lambda x, n=flight.num:
+                                 Clock.schedule_once(lambda dt: self.manager.download_flight_header(n))))
 
     def go_back(self, *largs):
         self.manager.current = 'ports'

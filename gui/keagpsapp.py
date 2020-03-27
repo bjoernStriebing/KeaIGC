@@ -7,7 +7,6 @@ from kivy.app import App
 from kivy.clock import Clock, mainthread
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager
-from kivy.animation import Animation
 from kivy.metrics import dp
 
 from igc import save as igc_save
@@ -16,6 +15,7 @@ from serialscreen import SerialScreen
 from flightlistscreen import FlightListScreen
 from popups.message import MessagePopup
 
+import animation
 from common import GuiColor
 
 
@@ -44,61 +44,39 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
         self.busy_indefinite()
         self.gps.set_port(button=button, **kwargs)
 
-    def download_flight(self, flight):
-        self.gps.download_flight(flight=flight)
+    def download_flight_header(self, flight):
+        self.gps.download_flight_header(flight=flight)
+
+    def is_busy(self):
+        return self.busy is not None
 
     def busy_indefinite(self):
-        if self.busy is not None:
+        if self.is_busy():
             return
 
-        def animate_width(width, duration=.3):
-            return Animation(size=(width, rect.size[1]),
-                             duration=.3, t='out_quad')
-
-        def animate_x(x, duration=2):
-            return Animation(pos=(x, rect.pos[1]),
-                             duration=duration, t='in_out_quad')
-
-        def move_left():
-            if self.busy is not None:
-                print 'move left'
-                width = header.width / (2 * 1.618)
-                left = header.x
-                self.busy = animate_width(width)
-                self.busy &= animate_x(left)
-                self.busy.bind(on_complete=lambda *_: move_right())
-                self.busy.bind(on_complete=lambda *_: stop())
-                self.busy.start(rect)
-
-        def move_right():
-            if self.busy is not None:
-                print 'move right'
-                width = header.width / (2 * 1.618)
-                right = header.x + header.width - width
-                self.busy = animate_width(width)
-                self.busy &= animate_x(right)
-                self.busy.bind(on_complete=lambda *_: move_left())
-                self.busy.bind(on_complete=lambda *_: stop())
-                self.busy.start(rect)
-
-        def stop():
-            if self.busy is None:
-                width = header.width
-                left = header.x
-                restore = animate_width(width, .3)
-                restore &= animate_x(left, .3)
-                restore.start(rect)
-
         header = self.current_screen.ids.header
+        width = header.width / (2 * 1.618)
+        left = header.x
+        right = header.x + header.width - width
         for rect in header.canvas.before.get_group('bar'):
-            width = header.width / (2 * 1.618)
-            left = header.x
-            right = header.x + header.width - width
-            self.busy = animate_width(width)
-            self.busy &= animate_x(right)
-            self.busy.bind(on_complete=lambda *_: move_left())
-            self.busy.bind(on_complete=lambda *_: stop())
+            self.busy = animation.animate_size(width, rect.size[1])
+            self.busy &= animation.animate_pos(right, rect.pos[1])
+            self.busy.bind(on_complete=lambda *_: animation.move_left(header, rect, gui=self))
+            self.busy.bind(on_complete=lambda *_: animation.stop(header, rect, gui=self))
             self.busy.start(rect)
+
+    def busy_progress(self, progress):
+        header = self.current_screen.ids.header
+        width = header.width * progress
+        left = header.x
+        for rect in header.canvas.before.get_group('bar'):
+            if self.busy is not None:
+                self.busy.stop(rect)
+            self.busy = animation.animate_pos(left, rect.pos[1], .05)
+            self.busy &= animation.animate_size(width, rect.size[1], .05)
+            self.busy.start(rect)
+        if progress >= 1.0:
+            self.busy = None
 
     def done(self):
         if not self.gps.joblist.empty():
@@ -111,6 +89,11 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
                 animation.stop(rect)
             except AttributeError:
                 pass
+
+    @mainthread
+    def show_map(self, flight_brief_header):
+        self.current = 'flightlist'
+        print flight_brief_header
 
     @mainthread
     def show_flights(self):
@@ -141,7 +124,6 @@ class GpsInterface(Thread):
 
     def _threaded(func):
         def wrapper(self, **kwargs):
-            print 'append to joblist', str(func)
             self.joblist.put((func, kwargs))
         return wrapper
 
@@ -160,22 +142,38 @@ class GpsInterface(Thread):
 
     @_threaded
     def get_list(self):
+        self.gui.busy_progress(0)
         Clock.schedule_once(lambda dt: self.gui.current_screen.add_flights(self.results), .02)
         self.gps.get_list(ret_queue=self.results)
 
-    @_threaded
-    def download_flight(self, flight):
-        try:
-            target_file = os.path.expanduser('~/Desktop/{}.igc'.format(self.gps.GUI_NAME))
-            igc_save.download(self.gps, flight, target_file)
-        except igc_save.UnsignedIGCException:
-            self.gui.show_message("IGC file wasn't signed because there was a problem validating the GPS module")
+    def download_flight_header(self, flight):
+        Clock.schedule_once(lambda dt: self._poll_progress())
+        header = self.gps.get_flight_brief(flight)
+        self.gui.show_map(header)
+
+    # @_threaded
+    # def download_flight(self, flight):
+    #     Clock.schedule_once(lambda dt: self._poll_progress(), .05)
+    #     try:
+    #         target_file = os.path.expanduser('~/Desktop/{}.igc'.format(self.gps.GUI_NAME))
+    #         igc_save.download(self.gps, flight, target_file)
+    #     except igc_save.UnsignedIGCException:
+    #         self.gui.show_message("IGC file wasn't signed because there was a problem validating the GPS module")
 
     def _target_func(self, device, joblist):
         self.gps = device.get_class(device)(port=None)
         while True:
             func, kwargs = joblist.get()
-            func(self, **kwargs)
+            try:
+                func(self, **kwargs)
+            except Exception as e:
+                print e
+
+    def _poll_progress(self):
+        progress = self.gps.progress
+        self.gui.busy_progress(progress)
+        if progress < 1.0:
+            Clock.schedule_once(lambda dt: self._poll_progress(), .05)
 
 
 if __name__ == '__main__':

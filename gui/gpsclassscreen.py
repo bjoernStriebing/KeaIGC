@@ -15,21 +15,9 @@ Builder.load_string("""
         orientation: "vertical"
         padding: dp(12)
         spacing: dp(7)
-        GuiLabel:
+        ScreenHeader:
             id: header
-            size_hint: 1, None
-            height: dp(32)
             text: "Select your type of GPS device"
-            font_size: dp(16)
-            text_size: self.width - dp(18), self.height - dp(4)
-            halign: 'left'
-            valign: 'bottom'
-            canvas.before:
-                Color:
-                    rgba: 245./255, 222./255, 84./255, 1
-                Rectangle:
-                    size: self.width, dp(3)
-                    pos: self.x, self.y + dp(1)
         ScrollView:
             bar_width: 3
             scroll_distance: dp(20)

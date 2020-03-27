@@ -11,7 +11,7 @@ import __main__ as main
 
 from gpsdevice.gpsmisc import *
 
-__all__ = ['GpsDeviceBase', 'GpsCommand',
+__all__ = ['GpsDeviceBase', 'GpsCommand', 'TrackHeader',
            'crc_checksum', 'crc_checksum_hex',
            'implements_gps_device', 'get_class', 'get_name']
 
@@ -86,6 +86,7 @@ class GpsCommand(object):
         self.command = command
         self.response = response
         self.data = data
+        self._data = data
         self.mode = mode
 
     def __repr__(self):
@@ -99,6 +100,9 @@ class GpsCommand(object):
             cmd_str += ','.join(map(str, self.data))
             cmd_str += ','
         return '$' + cmd_str + '*' + crc_checksum_hex(cmd_str)
+
+    def reset(self):
+        self.data = self._data
 
 
 class GpsDeviceBase(object):
@@ -199,7 +203,7 @@ class GpsDeviceBase(object):
             logger.debug('{} receive mode is {} but no response expected'.format(self.__class__.__name__, self.mode))
         self.io.write(cmd_str + '\r\n')
 
-    def read(self, mode=None, progress_done_count=None):
+    def read(self, **kwargs):
         """
         Recieve response from GPS device.
 
@@ -207,14 +211,14 @@ class GpsDeviceBase(object):
         Respone mode should be set while sending the command that triggerd the
         response. It can also be forced with kwargs.
         """
-        if mode is not None:
-            self.mode = mode
-
+        self.mode = kwargs.pop('mode', self.mode)
         if self.mode == 'NMEA':
             response = self._read_nmea()
         elif self.mode == 'BIN':
-            response = self._read_bin(progress_done_count=progress_done_count)
-        logger.info('{} NMEA response: {}'.format(self.__class__.__name__, response))
+            progress_done_count = kwargs.pop('progress_done_count', None)
+            header_only = kwargs.pop('header_only', None)
+            response = self._read_bin(progress_done_count=progress_done_count, header_only=header_only)
+        logger.debug('{} NMEA response: {}'.format(self.__class__.__name__, response))
         return response
 
     def _read_nmea(self):
@@ -268,6 +272,17 @@ class GpsDeviceBase(object):
                 ret_queue.put((self.progress, response))
             print '{:3.0f}%'.format(self.progress * 100), response
 
+    def get_flight_brief(self, num):
+        """Download Flight Information Record and Key Position only."""
+        try:
+            entry = self.tracklist[int(num)]
+        except KeyError:
+            print 'Track number {} out of range'.format(num)
+        flight_date = entry.datetime.strftime('%y%m%d%H%M%S')
+        self._get_flight.reset()
+        self.send(self._get_flight, data=[flight_date])
+        return self.read(header_only=True)
+
     def get_flight(self, num):
         """Download GPS tracklog."""
         try:
@@ -275,9 +290,21 @@ class GpsDeviceBase(object):
         except KeyError:
             print 'Track number {} out of range'.format(num)
         flight_date = entry.datetime.strftime('%y%m%d%H%M%S')
+        self._get_flight.reset()
         self.send(self._get_flight, data=[flight_date])
         # FIXME this assumes 1s fix interval
         return self.read(progress_done_count=entry.duration.total_seconds() + 1)
+
+
+class TrackHeader(Struct):
+
+    def __init__(self, latitude, longitude, timestamp, **kwargs):
+        self.latitude = latitude
+        self.longitude = longitude
+        self.timestamp = timestamp
+        self.altitude_gps = kwargs.pop('alt_gps', None)
+        self.altitude_baro = kwargs.pop('alt_baro', None)
+        self.pilot_name = kwargs.pop('pilot_name', '')
 
 
 def crc_checksum(data):

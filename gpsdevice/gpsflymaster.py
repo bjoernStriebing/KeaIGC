@@ -39,7 +39,7 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
             self.get_id()
             self.validate_id()
 
-    def _read_bin(self, progress_done_count=None):
+    def _read_bin(self, progress_done_count=None, header_only=False):
         """Read binary data transfer response from GPS device."""
         last_fix = None
         tracklog = None
@@ -51,12 +51,18 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
             packet.id = self.io.read(2)
             if packet.id == 'a3a3':
                 return fir, key_record, tracklog
+            elif packet.id == '0000':
+                # undocumented mystery packet sent between consecutive downloads
+                # politly knod and smile so we get to the actual data
+                print packet
+                self.io.write(b'\xb1')
+                continue
             packet.length = self.io.read(1)
             packet.data = self.io.read(packet.length)
             packet.crc = self.io.read(1)
 
             if not packet.is_valid:
-                print 'NACK', packet.id, packet.length, 'crc', packet.crc, '<->', crc_checksum([packet.length] + packet.data)
+                # print 'NACK', packet.id, packet.length, 'crc', packet.crc, '<->', crc_checksum([packet.length] + packet.data)
                 self.io.write(b'\xb2')
                 # print '--------------------------------------------------------\n\n'
                 # TODO: max crc errors
@@ -89,6 +95,10 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
                 # print 'baro:    ', key_record.altitude_baro
                 # print 'time:    ', key_record.timestamp
                 # print 'CRC:     ', packet.crc
+                if header_only:
+                    self.io.write(b'\xb3')
+                    self.progress = 1
+                    return fir, key_record, tracklog
             elif packet.id == 'a2a2':
                 offset = 0
                 for _ in range(0, packet.length, 6):
@@ -108,11 +118,17 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
 
             if progress_done_count is not None:
                 self.progress = float(fix_count) / progress_done_count
-                print '{:3.0f}%'.format(self.progress * 100), last_fix or fir
-                # print 'ACK', packet.id, packet.length, 'crc', packet.crc
+                # print '{:3.0f}%'.format(self.progress * 100), last_fix or fir
             self.io.write(b'\xb1')
         # print '--------------------------------------------------------\n\n'
         # TODO break on error and returns
+
+    def get_flight_brief(self, num):
+        """Download Flight Information Record and Key Position only."""
+        fir, kpr, _ = super(GpsFlymaster, self).get_flight_brief(num)
+        return TrackHeader(latitude=kpr.latitude, longitude=kpr.longitude,
+                           alt_gps=kpr.altitude_gps, alt_baro=kpr.altitude_baro,
+                           timestamp=kpr.timestamp, pilot_name=fir.pilot_name)
 
 
 class BinPacket(Struct):
@@ -169,7 +185,6 @@ class BinPacket(Struct):
 
     @crc.setter
     def crc(self, value):
-        print type(value), value
         try:
             crc = ord(value)
         except TypeError:

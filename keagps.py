@@ -9,7 +9,7 @@ from serial.serialutil import SerialException
 sys.path.append(os.path.dirname(__file__))
 logging.basicConfig(stream=sys.stdout)
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 from igc import save as igc_save                                        # nopep8
 from gpsdevice import gpsflymaster                                      # nopep8
