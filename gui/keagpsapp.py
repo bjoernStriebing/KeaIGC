@@ -94,7 +94,7 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
     def show_map(self, flight_brief_header):
         self.current = 'flightlist'
         screen = self.get_screen('flightlist')
-        screen.show_map()
+        screen.show_map(flight_brief_header)
 
     @mainthread
     def show_flights(self):

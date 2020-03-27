@@ -27,9 +27,9 @@ from kivy.graphics import Mesh, Line, Color
 from kivy.graphics.tesselator import Tesselator, WINDING_ODD, TYPE_POLYGONS
 from kivy.utils import get_color_from_hex
 from kivy.metrics import dp
-from mapview import CACHE_DIR
-from mapview.view import MapLayer
-from mapview.downloader import Downloader
+from . import CACHE_DIR
+from view import MapLayer
+from downloader import Downloader
 
 COLORS = {
     'aliceblue': '#f0f8ff',

@@ -8,11 +8,13 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
+from kivy.properties import ObjectProperty
 from kivy.metrics import *
 
 from common import GuiLabel, GuiButton, GuiSelsectButton
 import gpsdevice
 import animation
+from contrib.gardenmapview import MapView, MapMarkerPopup
 
 local_tz = get_localzone()
 
@@ -44,6 +46,9 @@ Builder.load_string("""
                 size_hint: .5, 1
                 pos_hint: {'x': 1.2, 'y': 0}
                 padding: dp(3.5), 0, 0, 0
+                MapView:
+                    id: map
+                    background_color: 1, 1, 1, 1
         BoxLayout:
             id: buttom
             size_hint: 1, None
@@ -61,6 +66,7 @@ Builder.load_string("""
 
 
 class FlightListScreen(Screen):
+    map_marker = ObjectProperty(None)
 
     def on_pre_enter(self, **kwargs):
         super(FlightListScreen, self).on_pre_enter(**kwargs)
@@ -93,12 +99,27 @@ class FlightListScreen(Screen):
     def enable_dl_button(self):
         self.ids.download_button.disabled = False
 
-    def show_map(self):
+    def show_map(self, flight_brief_header):
         shrink = animation.animate_size(.5, 1, use_hint=True, duration=.6)
         slide = animation.animate_pos(.5, 0, use_hint=True, duration=.6)
         slide.bind(on_complete=lambda *_: self.enable_dl_button())
         shrink.start(self.ids.listbox)
         slide.start(self.ids.mapbox)
+
+        map = self.ids.map
+        marker = MapMarkerPopup(lat=flight_brief_header.latitude,
+                                lon=flight_brief_header.longitude)
+        map.add_marker(marker)
+        if self.map_marker is not None:
+            map.remove_marker(self.map_marker)
+        self.map_marker = marker
+
+    def on_map_marker(self, instance, marker):
+        map = self.ids.map
+        if marker is not None:
+            map.center_on(marker.lat,
+                          marker.lon)
+            map.zoom = 13
 
 
 def utc_to_local(utc_dt):

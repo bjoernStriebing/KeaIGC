@@ -16,7 +16,7 @@ MIN_LATITUDE = -90.
 MAX_LATITUDE = 90.
 MIN_LONGITUDE = -180.
 MAX_LONGITUDE = 180.
-CACHE_DIR = "cache"
+CACHE_DIR = '/tmp/keagps/cache'
 
 try:
     # fix if used within garden
@@ -26,7 +26,7 @@ try:
 except KeyError:
     pass
 
-from mapview.types import Coordinate, Bbox
-from mapview.source import MapSource
-from mapview.view import MapView, MapMarker, MapLayer, MarkerMapLayer, \
+from types import Coordinate, Bbox
+from source import MapSource
+from view import MapView, MapMarker, MapLayer, MarkerMapLayer, \
     MapMarkerPopup

@@ -18,10 +18,10 @@ from kivy.graphics.transformation import Matrix
 from kivy.lang import Builder
 from kivy.compat import string_types
 from math import ceil
-from mapview import MIN_LONGITUDE, MAX_LONGITUDE, MIN_LATITUDE, MAX_LATITUDE, \
+from . import MIN_LONGITUDE, MAX_LONGITUDE, MIN_LATITUDE, MAX_LATITUDE, \
     CACHE_DIR, Coordinate, Bbox
-from mapview.source import MapSource
-from mapview.utils import clamp
+from source import MapSource
+from utils import clamp
 from itertools import takewhile
 
 import webbrowser
@@ -235,7 +235,15 @@ class MarkerMapLayer(MapLayer):
         markers = sorted(self.markers, key=lambda x: -x.lat)
         margin = max((max(marker.size) for marker in markers))
         bbox = mapview.get_bbox(margin)
+        bbox_l_edge = bbox[1]
+        bbox_r_edge = bbox[3]
+        bbox_center_x = (bbox_l_edge + bbox_r_edge) / 2
         for marker in markers:
+            if mapview.wrap_edge:
+                while marker.lon < bbox_l_edge and marker.lon - bbox_center_x < -180:
+                    marker.lon += 360
+                while marker.lon > bbox_r_edge and marker.lon - bbox_center_x > 180:
+                    marker.lon -= 360
             if bbox.collide(marker.lat, marker.lon):
                 set_marker_position(mapview, marker)
                 if not marker.parent:
@@ -307,6 +315,10 @@ class MapView(Widget):
     Default to 100 as 100ms. Use 0 to deactivate.
     """
 
+    wrap_edge = BooleanProperty(True)
+    """Extend the map past the E and W edges of the world.
+    """
+
     delta_x = NumericProperty(0)
     delta_y = NumericProperty(0)
     background_color = ListProperty([181 / 255., 208 / 255., 208 / 255., 1])
@@ -314,6 +326,7 @@ class MapView(Widget):
     _zoom = NumericProperty(0)
     _pause = BooleanProperty(False)
     _scale = 1.
+    _dynamic_max_zoom = 99
     _disabled_count = 0
 
     __events__ = ["on_map_relocated"]
@@ -397,7 +410,8 @@ class MapView(Widget):
         """
         zoom = clamp(zoom,
                      self.map_source.get_min_zoom(),
-                     self.map_source.get_max_zoom())
+                     min(self.map_source.get_max_zoom(),
+                         self._dynamic_max_zoom))
         if int(zoom) == int(self._zoom):
             if scale is None:
                 return
@@ -430,7 +444,7 @@ class MapView(Widget):
         self.zoom = self._zoom
 
     def on_zoom(self, instance, zoom):
-        if zoom == self._zoom:
+        if zoom == self._zoom or zoom > self._dynamic_max_zoom:
             return
         x = self.map_source.get_x(zoom, self.lon) - self.delta_x
         y = self.map_source.get_y(zoom, self.lat) - self.delta_y
@@ -668,14 +682,18 @@ class MapView(Widget):
         zoom = self._zoom
         scatter = self._scatter
         scale = scatter.scale
-        if scale >= 2.:
+        if scale >= 1.:
             zoom += 1
             scale /= 2.
-        elif scale < 1:
+        elif scale < .5:
             zoom -= 1
             scale *= 2.
-        zoom = clamp(zoom, map_source.min_zoom, map_source.max_zoom)
-        if zoom != self._zoom:
+        zoom = max(zoom, self.map_source.get_min_zoom())
+        adj_scale = 1.
+        while zoom > self._dynamic_max_zoom or zoom > self.map_source.get_max_zoom():
+            zoom -= 1
+            scale *= 2
+        if zoom != self._zoom or scale != self._scale:
             self.set_zoom_at(zoom, scatter.x, scatter.y, scale=scale)
             self.trigger_update(True)
         else:
@@ -730,12 +748,15 @@ class MapView(Widget):
     def do_update(self, dt):
         zoom = self._zoom
         scale = self._scale
-        self.lon = self.map_source.get_lon(zoom,
-                                           (
-                                           self.center_x - self._scatter.x) / scale - self.delta_x)
-        self.lat = self.map_source.get_lat(zoom,
-                                           (
-                                           self.center_y - self._scatter.y) / scale - self.delta_y)
+        try:
+            self.lon = self.map_source.get_lon(zoom, (self.center_x - self._scatter.x) / scale - self.delta_x)
+            self.lat = self.map_source.get_lat(zoom, (self.center_y - self._scatter.y) / scale - self.delta_y)
+        except OverflowError:
+            return
+        while self.lon < MIN_LONGITUDE:
+            self.lon += 360
+        while self.lon > MAX_LONGITUDE:
+            self.lon -= 360
         self.dispatch("on_map_relocated", zoom, Coordinate(self.lon, self.lat))
         for layer in self._layers:
             layer.reposition()
@@ -759,12 +780,21 @@ class MapView(Widget):
         x_count = int(ceil(w / scale / float(size))) + 1
         y_count = int(ceil(h / scale / float(size))) + 1
 
-        tile_x_first = int(clamp(vx / float(size), 0, max_x_end))
-        tile_y_first = int(clamp(vy / float(size), 0, max_y_end))
-        tile_x_last = tile_x_first + x_count
+        if self.wrap_edge:
+            tile_x_first = int(vx / float(size)) - 1
+            tile_y_first = int(clamp(vy / float(size), 0, max_y_end))
+        else:
+            tile_x_first = int(clamp(vx / float(size), 1, max_x_end)) - 1
+            tile_y_first = int(clamp(vy / float(size), 0, max_y_end))
+
+        tile_x_last = tile_x_first + x_count + 1
         tile_y_last = tile_y_first + y_count
-        tile_x_last = int(clamp(tile_x_last, tile_x_first, max_x_end))
-        tile_y_last = int(clamp(tile_y_last, tile_y_first, max_y_end))
+
+        if self.wrap_edge:
+            tile_y_last = int(clamp(tile_y_last, tile_y_first, max_y_end))
+        else:
+            tile_x_last = int(clamp(tile_x_last, tile_x_first, max_x_end))
+            tile_y_last = int(clamp(tile_y_last, tile_y_first, max_y_end))
 
         x_count = tile_x_last - tile_x_first
         y_count = tile_y_last - tile_y_first
@@ -866,7 +896,7 @@ class MapView(Widget):
         tile.map_source = map_source
         tile.state = "loading"
         if not self._pause:
-            map_source.fill_tile(tile)
+            map_source.fill_tile(tile, map_na_callback=self.soft_zoom_limit)
         self.canvas_map.add(tile.g_color)
         self.canvas_map.add(tile)
         self._tiles.append(tile)
@@ -942,6 +972,14 @@ class MapView(Widget):
         self.center_on(self.lat, self.lon)
         self.trigger_update(True)
 
+    def on_lat(self, instance, lat):
+        if self._zoom < self._dynamic_max_zoom - 4:
+            self._dynamic_max_zoom = self.map_source.max_zoom
+
+    def on_lon(self, instance, lon):
+        if self._zoom < self._dynamic_max_zoom - 4:
+            self._dynamic_max_zoom = self.map_source.max_zoom
+
     def on_map_source(self, instance, source):
         if isinstance(source, string_types):
             self.map_source = MapSource.from_provider(source)
@@ -957,5 +995,14 @@ class MapView(Widget):
             raise Exception("Invalid map source provider")
         self.zoom = clamp(self.zoom,
                           self.map_source.min_zoom, self.map_source.max_zoom)
+        self._dynamic_max_zoom = self.map_source.max_zoom
         self.remove_all_tiles()
         self.trigger_update(True)
+
+    def soft_zoom_limit(self, tile_zoom):
+        self._dynamic_max_zoom = tile_zoom - 1
+        try:
+            _ = self._scale_target_pos
+        except AttributeError:
+            self._scale_target_pos = self.get_window_xy_from(self.lat, self.lon, self.zoom)
+        self.diff_scale_at(-1, *self._scale_target_pos)

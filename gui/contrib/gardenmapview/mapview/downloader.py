@@ -10,13 +10,24 @@ from random import choice
 import requests
 import traceback
 from time import time
-from mapview import CACHE_DIR
+from . import CACHE_DIR
 
 
 DEBUG = "MAPVIEW_DEBUG_DOWNLOADER" in environ
 # user agent is needed because since may 2019 OSM gives me a 429 or 403 server error
 # I tried it with a simpler one (just Mozilla/5.0) this also gets rejected
 USER_AGENT = 'Kivy-garden.mapview'
+INVALID_MAP_RULES = [
+    ('arcgisonline.com/arcgis/rest/services/World_Imagery', '\x00', 0.315)
+]
+
+
+def is_approx(a, b, threshold=0.01):
+    return abs(a - b) <= threshold
+
+
+class MapNotAvailable(Exception):
+    pass
 
 
 class Downloader(object):
@@ -51,11 +62,11 @@ class Downloader(object):
         future = self.executor.submit(f, *args, **kwargs)
         self._futures.append(future)
 
-    def download_tile(self, tile):
+    def download_tile(self, tile, map_na_callback=None):
         if DEBUG:
             print("Downloader: queue(tile) zoom={} x={} y={}".format(
                 tile.zoom, tile.tile_x, tile.tile_y))
-        future = self.executor.submit(self._load_tile, tile)
+        future = self.executor.submit(self._load_tile, tile, map_na_callback)
         self._futures.append(future)
 
     def download(self, url, callback, **kwargs):
@@ -71,7 +82,7 @@ class Downloader(object):
         r = requests.get(url, **kwargs)
         return callback, (url, r, )
 
-    def _load_tile(self, tile):
+    def _load_tile(self, tile, map_na_callback):
         if tile.state == "done":
             return
         cache_fn = tile.cache_fn
@@ -79,8 +90,9 @@ class Downloader(object):
             if DEBUG:
                 print("Downloader: use cache {}".format(cache_fn))
             return tile.set_source, (cache_fn, )
+        tile_x = tile.tile_x % tile.map_source.get_col_count(tile.zoom)
         tile_y = tile.map_source.get_row_count(tile.zoom) - tile.tile_y - 1
-        uri = tile.map_source.url.format(z=tile.zoom, x=tile.tile_x, y=tile_y,
+        uri = tile.map_source.url.format(z=tile.zoom, x=tile_x, y=tile_y,
                                          s=choice(tile.map_source.subdomains))
         if DEBUG:
             print("Downloader: download(tile) {}".format(uri))
@@ -88,11 +100,19 @@ class Downloader(object):
         try:
             req.raise_for_status()
             data = req.content
+            # don't succeed on data not available image
+            for rule, char, ratio in INVALID_MAP_RULES:
+                if rule in uri and \
+                        is_approx(float(data.count(char)) / len(data), ratio):
+                    raise MapNotAvailable()
             with open(cache_fn, "wb") as fd:
                 fd.write(data)
             if DEBUG:
                 print("Downloaded {} bytes: {}".format(len(data), uri))
             return tile.set_source, (cache_fn, )
+        except MapNotAvailable:
+            if map_na_callback is not None and tile.state == 'loading':
+                map_na_callback(tile.zoom)
         except Exception as e:
             print("Downloader error: {!r}".format(e))
 
@@ -110,7 +130,10 @@ class Downloader(object):
                 if result is None:
                     continue
                 callback, args = result
-                callback(*args)
+                try:
+                    callback(*args)
+                except ValueError:
+                    pass
 
                 # capped executor in time, in order to prevent too much
                 # slowiness.
