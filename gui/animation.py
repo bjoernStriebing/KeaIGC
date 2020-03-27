@@ -1,14 +1,24 @@
 from kivy.animation import Animation
 
 
-def animate_size(width, height, duration=.3):
-    return Animation(size=(width, height),
-                     duration=.3, t='out_quad')
+def animate_size(width, height, duration=.3, use_hint=False):
+    if not use_hint:
+        animation = Animation(size=(width, height),
+                              duration=.3, t='out_quad')
+    else:
+        animation = Animation(size_hint=(width, height),
+                              duration=.3, t='out_quad')
+    return animation
 
 
-def animate_pos(x, y, duration=2):
-    return Animation(pos=(x, y),
-                     duration=duration, t='in_out_quad')
+def animate_pos(x, y, duration=2, use_hint=False):
+    if not use_hint:
+        animation = Animation(pos=(x, y),
+                              duration=duration, t='in_out_quad')
+    else:
+        animation = Animation(pos_hint={'x': x, 'y': y},
+                              duration=duration, t='in_out_quad')
+    return animation
 
 
 def move_left(widget_frame, anim_obj, gui):

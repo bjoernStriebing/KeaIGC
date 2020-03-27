@@ -4,6 +4,7 @@ from tzlocal import get_localzone
 from kivy.lang import Builder
 from kivy.clock import Clock, mainthread
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
@@ -11,6 +12,7 @@ from kivy.metrics import *
 
 from common import GuiLabel, GuiButton, GuiSelsectButton
 import gpsdevice
+import animation
 
 local_tz = get_localzone()
 
@@ -23,25 +25,38 @@ Builder.load_string("""
         ScreenHeader:
             id: header
             text: "Select flights from list below"
-        ScrollView:
-            bar_width: 3
-            scroll_distance: dp(20)
-            scroll_wheel_distance: dp(20)
-            smooth_scroll_end: 8
-            GuiGridLayout:
-                id: list_bl
-                size_hint_y: None
-                height: self.minimum_height
+        FloatLayout:
+            ScrollView:
+                id: listbox
+                size_hint: 1, 1
+                pos_hint: {'x': 0, 'y': 0}
+                bar_width: 3
+                scroll_distance: dp(20)
+                scroll_wheel_distance: dp(20)
+                smooth_scroll_end: 8
+                GuiGridLayout:
+                    id: list_bl
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: 0, 0, dp(3.5), 0
+            BoxLayout:
+                id: mapbox
+                size_hint: .5, 1
+                pos_hint: {'x': 1.2, 'y': 0}
+                padding: dp(3.5), 0, 0, 0
         BoxLayout:
             id: buttom
             size_hint: 1, None
             height: self.minimum_height
             spacing: dp(7)
             GuiButton:
+                id: back_button
                 text: "Back"
                 on_release: Clock.schedule_once(lambda dt: root.go_back())
             GuiButton:
+                id: download_button
                 text: "Download"
+                disabled: True
 """)
 
 
@@ -74,6 +89,16 @@ class FlightListScreen(Screen):
 
     def go_back(self, *largs):
         self.manager.current = 'ports'
+
+    def enable_dl_button(self):
+        self.ids.download_button.disabled = False
+
+    def show_map(self):
+        shrink = animation.animate_size(.5, 1, use_hint=True, duration=.6)
+        slide = animation.animate_pos(.5, 0, use_hint=True, duration=.6)
+        slide.bind(on_complete=lambda *_: self.enable_dl_button())
+        shrink.start(self.ids.listbox)
+        slide.start(self.ids.mapbox)
 
 
 def utc_to_local(utc_dt):
