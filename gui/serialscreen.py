@@ -50,26 +50,34 @@ Builder.load_string("""
                 on_release: Clock.schedule_once(lambda dt: root.go_back())
             GuiButton:
                 text: "Reload Ports"
-                on_release: Clock.schedule_once(lambda dt: root.list_serial_ports())
+                on_release: Clock.schedule_once(lambda dt: root.list_serial_ports(False))
 """)
 
 
 class SerialScreen(Screen):
 
-    def on_pre_enter(self, **kwargs):
+    def on_enter(self, **kwargs):
         super(SerialScreen, self).on_pre_enter(**kwargs)
         self.list_serial_ports()
 
-    def list_serial_ports(self):
-        self.ids.list_bl.clear_widgets()
-        # FIXME: should use proper serial enumerations
-        for port in glob('/dev/tty.*'):
-            b = GuiButton(text=os.path.basename(port))
+    def list_serial_ports(self, reschedule=True):
+        # FIXME: should use better serial enumerations
+        ports = glob('/dev/tty.*')
+        # add missing ports
+        for port in ports:
+            port_name = os.path.basename(port)
+            if port_name in [b.text for b in self.ids.list_bl.children]:
+                continue
+            b = GuiButton(text=port_name)
             b.bind(on_release=partial(self.manager.port_selected, port=port))
             self.ids.list_bl.add_widget(b)
-            # self.ids.list_bl.add_widget(
-            #     GuiButton(text=os.path.basename(port),
-            #               on_release=lambda x, p=port: Clock.schedule_once(lambda dt: self.manager.port_selected(x, p))))
+        # throw out old ones
+        for button in self.ids.list_bl.children:
+            if button.text not in map(os.path.basename, ports):
+                self.ids.list_bl.remove_widget(button)
+        # do it all again soon
+        if reschedule and self.manager.current_screen == self:
+            Clock.schedule_once(lambda dt: self.list_serial_ports(), 1)
 
     def go_back(self, *largs):
         self.manager.current = 'devices'
