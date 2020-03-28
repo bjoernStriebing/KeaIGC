@@ -140,8 +140,11 @@ class GpsInterface(Thread):
 
     @_threaded
     def set_port(self, button, port):
+        if self.gps.io is not None and port == self.gps.io.port:
+            return
         try:
             self.gps.io = port
+            id = self.gps.get_id()
         except (SerialException, AttributeError, ValueError):
             button.disabled = True
             self.gui.show_message('Serial port "{}" does not match GPS device {}'.format(
@@ -187,10 +190,11 @@ class GpsInterface(Thread):
         self.gps = device.get_class(device)(port=None)
         while True:
             func, kwargs = joblist.get()
-            try:
-                func(self, **kwargs)
-            except Exception as e:
-                print e
+            func(self, **kwargs)
+            # try:
+            #     func(self, **kwargs)
+            # except Exception as e:
+            #     print e
 
     def _poll_progress(self):
         progress = self.gps.progress

@@ -92,7 +92,7 @@ Builder.load_string("""
                                     text: "GPS"
                                 GuiLabel:
                                     height: dp(20)
-                                    text: "offset"
+                                    text: "Offset"
                             BoxLayout:
                                 height: self.minimum_height
                                 size_hint_y: None
@@ -227,10 +227,16 @@ class FlightListScreen(Screen):
     def on_enter(self, **kwargs):
         super(FlightListScreen, self).on_pre_enter(**kwargs)
         self.list_flights()
+        self.fill_meta()
 
     def list_flights(self):
         self.ids.list_bl.clear_widgets()
         self.manager.gps.get_list()
+
+    def fill_meta(self):
+        gps = self.manager.gps.gps
+        self.ids.pilot_name.text = str(gps.pilot_name)
+        self.ids.replace_pilot.selected = True
 
     @mainthread
     def add_flights(self, flight_queue):
@@ -293,9 +299,9 @@ class FlightListScreen(Screen):
             map.zoom = 13
 
     def update_selected(self, button, selected):
-        if button in self.active_download_list:
-            return
         if selected:
+            if button in self.active_download_list:
+                return
             self.download_list.append(button)
         else:
             try:

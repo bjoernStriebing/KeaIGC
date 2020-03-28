@@ -122,6 +122,7 @@ class GpsDeviceBase(object):
         self._serial = None
         self._fw_version = None
         self._gps_receiver = None
+        self._pilot_name = None
         self._pilot_overwrite = False
         self._glider_overwrite = False
 
@@ -178,6 +179,15 @@ class GpsDeviceBase(object):
     @gps_receiver.setter
     def gps_receiver(self, value):
         self._gps_receiver = value
+
+    @property
+    def pilot_name(self):
+        return str(self._pilot_name or '')
+
+    @pilot_name.setter
+    def pilot_name(self, value):
+        name = filter(lambda c: c in printable, value)
+        self._pilot_name = value.strip()
 
     @property
     def pilot_overwrite(self):
@@ -280,6 +290,8 @@ class GpsDeviceBase(object):
             self.model = response.model
             self.serial = response.serial
             self.fw_version = response.fw_version
+            self.pilot_name = response.pilot
+            print self, self.pilot_name
             print '{:3.0f}%'.format(self.progress * 100), response
 
     def validate_id(self):
