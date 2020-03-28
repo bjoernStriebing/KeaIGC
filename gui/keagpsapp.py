@@ -1,4 +1,5 @@
 import os
+import errno
 import Queue as queue
 from threading import Thread
 from glob import glob
@@ -47,8 +48,8 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
     def download_flight_header(self, flight):
         self.gps.download_flight_header(flight=flight)
 
-    def download_flight(self, flight):
-        self.gps.download_flight(flight=flight)
+    def download_flight(self, flight, output_file):
+        self.gps.download_flight(flight=flight, output_file=output_file)
 
     def is_busy(self):
         return self.busy is not None
@@ -94,10 +95,10 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
                 pass
 
     @mainthread
-    def show_map(self, flight_brief_header):
+    def show_map(self, flight_num, flight_brief_header):
         self.current = 'flightlist'
         screen = self.get_screen('flightlist')
-        screen.show_map(flight_brief_header)
+        screen.show_map(flight_num, flight_brief_header)
 
     @mainthread
     def unselect_flight(self, flight):
@@ -161,18 +162,26 @@ class GpsInterface(Thread):
         if self.polling is None:
             self.poppling = Clock.schedule_once(lambda dt: self._poll_progress())
         header = self.gps.get_flight_brief(flight)
-        self.gui.show_map(header)
+        self.gui.show_map(flight, header)
 
     @_threaded
-    def download_flight(self, flight):
+    def download_flight(self, flight, output_file):
         if self.polling is None:
             Clock.schedule_once(lambda dt: self._poll_progress(), .05)
         try:
-            target_file = os.path.expanduser('~/Desktop/{}.igc'.format(self.gps.GUI_NAME))
-            igc_save.download(self.gps, flight, target_file)
+            output_file = os.path.abspath(output_file)
+            output_dir = os.path.dirname(output_file)
+            mkdir_p(output_dir)
+            igc_save.download(self.gps, flight, output_file)
         except igc_save.UnsignedIGCException:
             self.gui.show_message("IGC file wasn't signed because there was a problem validating the GPS module")
         self.gui.unselect_flight(flight)
+
+    def set_pilot_overwrite(self, overwrite):
+        self.gps.pilot_overwrite = overwrite
+
+    def set_glider_overwrite(self, overwrite):
+        self.gps.glider_overwrite = overwrite
 
     def _target_func(self, device, joblist):
         self.gps = device.get_class(device)(port=None)
@@ -190,6 +199,17 @@ class GpsInterface(Thread):
             self.polling = Clock.schedule_once(lambda dt: self._poll_progress(), .05)
         else:
             self.polling = None
+
+
+# TODO: not required in python3
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 
 if __name__ == '__main__':

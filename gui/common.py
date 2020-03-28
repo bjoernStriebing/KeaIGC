@@ -2,6 +2,7 @@ from kivy.lang import Builder
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.textinput import TextInput
 from kivy.properties import BooleanProperty, NumericProperty, ObjectProperty
 from kivy.metrics import *
 
@@ -41,9 +42,9 @@ class GuiButton(Button, GuiColor):
 class GuiSelsectButton(GuiButton):
     selected = BooleanProperty(False)
 
-    def on_press(self):
+    def on_press(self, *args):
+        super(GuiSelsectButton, self).on_press()
         self.selected ^= True  # toggle
-        return super(GuiSelsectButton, self).on_press()
 
     def on_selected(self, instance, selected):
         if selected:
@@ -61,10 +62,31 @@ Builder.load_string("""
 <GuiLabel>:
     size_hint: 1, None
     height: dp(60)
+    text_size: self.size
+    halign: 'center'
+    valign: 'middle'
 """)
 
 
 class GuiLabel(Label, GuiColor):
+    pass
+
+
+Builder.load_string("""
+<GuiTextInput>:
+    size_hint: 1, None
+    height: dp(24)
+    multiline: False
+    background_normal: "gui/img/g85.png"
+    background_active: "gui/img/g85.png"
+    selection_color: 245./255, 222./255, 84./255, .62
+    cursor_color: 1, 0, 0, 1
+    write_tab: False
+    text_validate_unfocus: False
+""")
+
+
+class GuiTextInput(TextInput):
     pass
 
 
@@ -74,6 +96,7 @@ Builder.load_string("""
     spacing: dp(5)
 
 """)
+
 
 Builder.load_string("""
 <ScreenHeader@GuiLabel>:

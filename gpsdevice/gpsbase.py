@@ -2,6 +2,7 @@ import serial
 import logging
 import operator
 import threading
+from string import printable
 from serial import SerialException
 from collections import Iterable
 from datetime import datetime, timedelta
@@ -121,6 +122,8 @@ class GpsDeviceBase(object):
         self._serial = None
         self._fw_version = None
         self._gps_receiver = None
+        self._pilot_overwrite = False
+        self._glider_overwrite = False
 
     @property
     def io(self):
@@ -175,6 +178,32 @@ class GpsDeviceBase(object):
     @gps_receiver.setter
     def gps_receiver(self, value):
         self._gps_receiver = value
+
+    @property
+    def pilot_overwrite(self):
+        if isinstance(self._pilot_overwrite, str):
+            return self._pilot_overwrite
+        return False
+
+    @pilot_overwrite.setter
+    def pilot_overwrite(self, value):
+        if value:
+            self._pilot_overwrite = str(value)
+        else:
+            self._pilot_overwrite = False
+
+    @property
+    def glider_overwrite(self):
+        if isinstance(self._glider_overwrite, str):
+            return self._glider_overwrite
+        return False
+
+    @glider_overwrite.setter
+    def glider_overwrite(self, value):
+        if value:
+            self._glider_overwrite = str(value)
+        else:
+            self._glider_overwrite = False
 
     def flush(self):
         """Empty serial buffer."""
@@ -293,7 +322,19 @@ class GpsDeviceBase(object):
         self._get_flight.reset()
         self.send(self._get_flight, data=[flight_date])
         # FIXME this assumes 1s fix interval
-        return self.read(progress_done_count=entry.duration.total_seconds() + 1)
+        fir, key_record, tracklog = self.read(progress_done_count=entry.duration.total_seconds() + 1)
+        if self.pilot_overwrite:
+            fir.pilot_name = self.pilot_overwrite
+        if self.glider_overwrite:
+            try:
+                brand, model = self.glider_overwrite.split(' ', 1)
+            except IndexError:
+                brand = self.glider_overwrite.strip()
+                model = ''
+            finally:
+                fir.glider_brand = brand.strip()
+                fir.glider_model = model.strip()
+        return fir, key_record, tracklog
 
 
 class TrackHeader(Struct):
@@ -304,7 +345,10 @@ class TrackHeader(Struct):
         self.timestamp = timestamp
         self.altitude_gps = kwargs.pop('alt_gps', None)
         self.altitude_baro = kwargs.pop('alt_baro', None)
-        self.pilot_name = kwargs.pop('pilot_name', '')
+        self.pilot_name = filter(lambda c: c in printable,
+                                 kwargs.pop('pilot_name', '').strip())
+        self.glider_name = filter(lambda c: c in printable,
+                                  kwargs.pop('glider_name', '').strip())
 
 
 def crc_checksum(data):

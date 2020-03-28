@@ -104,7 +104,10 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
                 if header_only:
                     self.io.write(b'\xb3')
                     self.progress = 1
-                    return fir, key_record, tracklog
+                    try:
+                        return fir, key_record, tracklog
+                    except UnboundLocalError:
+                        return self._fir, key_record, tracklog
             elif packet.id == 'a2a2':
                 offset = 0
                 for _ in range(0, packet.length, 6):
@@ -137,7 +140,8 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
         fir, kpr, _ = super(GpsFlymaster, self).get_flight_brief(num)
         return TrackHeader(latitude=kpr.latitude, longitude=kpr.longitude,
                            alt_gps=kpr.altitude_gps, alt_baro=kpr.altitude_baro,
-                           timestamp=kpr.timestamp, pilot_name=fir.pilot_name)
+                           timestamp=kpr.timestamp, pilot_name=fir.pilot_name,
+                           glider_name=' '.join([fir.glider_brand, fir.glider_model]))
 
 
 class BinPacket(Struct):
@@ -220,7 +224,10 @@ class FlightInformationRecord(Struct):
 
     @pilot_number.setter
     def pilot_number(self, value):
-        self._pilot_number = ''.join(map(chr, value))
+        try:
+            self._pilot_number = ''.join(map(chr, value))
+        except TypeError:
+            self._pilot_number = value
 
     @property
     def pilot_name(self):
@@ -228,7 +235,10 @@ class FlightInformationRecord(Struct):
 
     @pilot_name.setter
     def pilot_name(self, value):
-        self._pilot_name = ''.join(map(chr, value))
+        try:
+            self._pilot_name = ''.join(map(chr, value))
+        except TypeError:
+            self._pilot_name = value
 
     @property
     def glider_brand(self):
@@ -236,7 +246,10 @@ class FlightInformationRecord(Struct):
 
     @glider_brand.setter
     def glider_brand(self, value):
-        self._glider_brand = ''.join(map(chr, value))
+        try:
+            self._glider_brand = ''.join(map(chr, value))
+        except TypeError:
+            self._glider_brand = value
 
     @property
     def glider_model(self):
@@ -244,7 +257,10 @@ class FlightInformationRecord(Struct):
 
     @glider_model.setter
     def glider_model(self, value):
-        self._glider_model = ''.join(map(chr, value))
+        try:
+            self._glider_model = ''.join(map(chr, value))
+        except TypeError:
+            self._glider_model = value
 
     @property
     def serial(self):
