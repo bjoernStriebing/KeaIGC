@@ -37,7 +37,9 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
         if port is not None:
             self.set_nav_off()
             self.get_id()
-            self.validate_id()
+            # FIXME disabled for now due to issues with manufacturer name when
+            #       setting port in constructor (the cmd app way)
+            # self.validate_id()
 
     def _read_bin(self, progress_done_count=None, header_only=False):
         """Read binary data transfer response from GPS device."""

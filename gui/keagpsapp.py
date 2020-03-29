@@ -1,5 +1,4 @@
 import os
-import errno
 import Queue as queue
 from threading import Thread
 from glob import glob
@@ -11,6 +10,7 @@ from kivy.uix.screenmanager import ScreenManager
 from kivy.metrics import dp
 
 from igc import save as igc_save
+from library import mkdir_p
 from gpsclassscreen import GpsClassScreen
 from serialscreen import SerialScreen
 from flightlistscreen import FlightListScreen
@@ -172,7 +172,7 @@ class GpsInterface(Thread):
         if self.polling is None:
             Clock.schedule_once(lambda dt: self._poll_progress(), .05)
         try:
-            output_file = os.path.abspath(output_file)
+            output_file = os.path.expanduser(output_file)
             output_dir = os.path.dirname(output_file)
             mkdir_p(output_dir)
             igc_save.download(self.gps, flight, output_file)
@@ -203,18 +203,3 @@ class GpsInterface(Thread):
             self.polling = Clock.schedule_once(lambda dt: self._poll_progress(), .05)
         else:
             self.polling = None
-
-
-# TODO: not required in python3
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
-
-
-if __name__ == '__main__':
-    KeaPgApp().run()

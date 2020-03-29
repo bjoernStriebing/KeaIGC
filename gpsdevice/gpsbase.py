@@ -291,7 +291,6 @@ class GpsDeviceBase(object):
             self.serial = response.serial
             self.fw_version = response.fw_version
             self.pilot_name = response.pilot
-            print self, self.pilot_name
             print '{:3.0f}%'.format(self.progress * 100), response
 
     def validate_id(self):

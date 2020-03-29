@@ -1,9 +1,9 @@
 import os
-import pytz
+# import pytz
 import time
 import Queue as queue
 from datetime import datetime
-from tzlocal import get_localzone
+# from tzlocal import get_localzone
 from kivy.lang import Builder
 from kivy.clock import Clock, mainthread
 from kivy.core.window import Window
@@ -16,11 +16,12 @@ from kivy.properties import ListProperty, ObjectProperty
 from kivy.metrics import *
 
 from common import GuiLabel, GuiButton, GuiSelsectButton, GuiTextInput
+from library import utc_to_local
 import gpsdevice
 import animation
 from contrib.gardenmapview import MapView, MapMarkerPopup
 
-local_tz = get_localzone()
+# local_tz = get_localzone()
 
 Builder.load_string("""
 <FlightListScreen>:
@@ -361,5 +362,5 @@ class FlightListScreen(Screen):
         self.ids.export_path.text = path
 
 
-def utc_to_local(utc_dt):
-    return utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+# def utc_to_local(utc_dt):
+#     return utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
