@@ -11,6 +11,3 @@ except ImportError as e:
     print e  # debug
     print "Import IGC signing from shared object"
     import save as save
-
-# TODO remove save.so from gitignore
-#      just don't commit binary undergoing many chanes for now.
