@@ -1,6 +1,5 @@
 import os
 import sys
-import pkgutil
 
 __all__ = ['GpsDevices']
 
@@ -9,8 +8,12 @@ GpsDevices = []
 
 def import_lib(developer=False):
     global GpsDevices
+    global gpsmisc
+    global gpsbase
+    global gpsflymaster
 
-    if getattr(sys, 'frozen', False):
+    frozen = getattr(sys, 'frozen', False)
+    if frozen:
         import lib.gpsmisc as gpsmisc
         import lib.gpsbase as gpsbase
         import lib.gpsflymaster as gpsflymaster
@@ -24,11 +27,10 @@ def import_lib(developer=False):
         from . import gpsbase
         from . import gpsflymaster
 
-    pkgpath = os.path.dirname(__file__)
-    for _, name, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
+    modules = sys.modules.values()
+    for module in modules:
         try:
-            module = eval(name)
             if module.implements_gps_device(module.__name__):
                 GpsDevices.append(module)
-        except Exception:
+        except (AttributeError, ImportError):
             pass

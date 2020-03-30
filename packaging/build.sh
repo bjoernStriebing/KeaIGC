@@ -15,7 +15,7 @@ rm -rf build && mkdir build
 rm -rf dist && mkdir dist
 
 # compile and sign GPS device classes
-mv gpsdevice/lib/*.so gpsdevice/lib/*.sig
+rm gpsdevice/lib/*.so gpsdevice/lib/*.sig
 cp "$PACKAGING_DIR/setup_gpsdevice.py" _setup_gpsdevice.py
 python _setup_gpsdevice.py build_ext --inplace
 python gpsdevice/_sign.py
@@ -40,6 +40,8 @@ cp "$PACKAGING_DIR/keagps.spec" _keagps.spec
 pyinstaller \
     -y \
     --debug all \
+    --onefile \
+    --windowed \
     --distpath="dist" \
     --workpath="build" \
     _keagps.spec

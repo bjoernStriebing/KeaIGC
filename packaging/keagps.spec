@@ -4,7 +4,6 @@
 
 block_cipher = None
 
-
 # dependencies = get_deps_all()
 
 a = Analysis(['keagps.py'],
@@ -19,6 +18,10 @@ a = Analysis(['keagps.py'],
              win_private_assemblies=False,
              cipher=block_cipher)
 # **dependencies)
+
+a.datas += [('gui/img', 'gui/img', 'DATA'),
+            ('gui/contrib/gardenmapview/mapview/icons',
+             'gui/contrib/gardenmapview/mapview/icons', 'DATA')]
 
 pyz = PYZ(a.pure,
           a.zipped_data,
@@ -43,3 +46,9 @@ coll = COLLECT(exe,
                upx=True,
                # upx_exclude=[],
                name='keagps')
+
+app = BUNDLE(coll,
+             name='Kea GPS Downloader.app',
+             bundle_identifier=None,
+             info_plist={'CFBundleShortVersionString': '0.2.0',
+                         'NSHighResolutionCapable': 'True'})

@@ -7,8 +7,6 @@ from serial import SerialException
 from collections import Iterable
 from datetime import datetime, timedelta
 from functools import reduce
-import __main__ as main
-
 
 from gpsdevice.gpsmisc import *
 
