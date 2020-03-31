@@ -50,5 +50,9 @@ rm _keagps.spec
 
 if $DMGIMAGE; then
     # update installer
-    true
+    rm packaging/Kea\ PG\ Logbook.dmg || true
+    dmgbuild -s "packaging/osx_dmg_settings.py" \
+      "Kea GPS Downloader" \
+      "dist/Kea GPS Downloader.dmg"
+    mv dist/Kea\ GPS\ Downloader.dmg ~/Desktop/Kea\ GPS\ Downloader.dmg
 fi

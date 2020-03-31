@@ -117,6 +117,7 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
 class KeaGpsApp(App):
 
     def build(self):
+        self.icon = 'gui/img/app_icon.png'
         self.gui = KeaGpsDownloader()
         return self.gui
 

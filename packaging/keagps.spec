@@ -49,6 +49,7 @@ coll = COLLECT(exe,
 
 app = BUNDLE(coll,
              name='Kea GPS Downloader.app',
+             icon='packaging/app_icon.icns',
              bundle_identifier=None,
              info_plist={'CFBundleShortVersionString': '0.2.0',
                          'NSHighResolutionCapable': 'True'})
