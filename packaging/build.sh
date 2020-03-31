@@ -36,7 +36,7 @@ fi
 # mv igc/_private igc/__private
 
 # build the actual app
-cp "$PACKAGING_DIR/keagps.spec" _keagps.spec
+cp "$PACKAGING_DIR/keaigc.spec" _keaigc.spec
 pyinstaller \
     -y \
     --debug all \
@@ -44,15 +44,15 @@ pyinstaller \
     --windowed \
     --distpath="dist" \
     --workpath="build" \
-    _keagps.spec
-rm _keagps.spec
+    _keaigc.spec
+rm _keaigc.spec
 # mv igc/__private igc/_private
 
 if $DMGIMAGE; then
     # update installer
     rm packaging/Kea\ PG\ Logbook.dmg || true
     dmgbuild -s "packaging/osx_dmg_settings.py" \
-      "Kea GPS Downloader" \
-      "dist/Kea GPS Downloader.dmg"
-    mv dist/Kea\ GPS\ Downloader.dmg ~/Desktop/Kea\ GPS\ Downloader.dmg
+      "Kea IGC Forager" \
+      "dist/Kea IGC Forager.dmg"
+    mv dist/Kea\ IGC\ Forager.dmg ~/Desktop/
 fi

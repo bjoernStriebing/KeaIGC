@@ -20,12 +20,12 @@ import animation
 from common import GuiColor
 
 
-class KeaGpsDownloader(ScreenManager, GuiColor):
+class KeaIgcDownloader(ScreenManager, GuiColor):
 
     busy = ObjectProperty(None, allownone=True)
 
     def __init__(self, **kwargs):
-        super(KeaGpsDownloader, self).__init__(**kwargs)
+        super(KeaIgcDownloader, self).__init__(**kwargs)
         self.device_screen = GpsClassScreen(name='devices')
         self.serial_screen = SerialScreen(name='ports')
         self.flightlist_screen = FlightListScreen(name='flightlist')
@@ -114,11 +114,11 @@ class KeaGpsDownloader(ScreenManager, GuiColor):
         MessagePopup(message)
 
 
-class KeaGpsApp(App):
+class KeaIgcApp(App):
 
     def build(self):
         self.icon = 'gui/img/app_icon.png'
-        self.gui = KeaGpsDownloader()
+        self.gui = KeaIgcDownloader()
         return self.gui
 
 

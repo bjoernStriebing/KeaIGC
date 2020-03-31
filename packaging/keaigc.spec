@@ -6,7 +6,7 @@ block_cipher = None
 
 # dependencies = get_deps_all()
 
-a = Analysis(['keagps.py'],
+a = Analysis(['keaigc.py'],
              pathex=['library/aerofiles'],
              binaries=[],
              datas=[],
@@ -31,7 +31,7 @@ exe = EXE(pyz,
           a.scripts,
           # [],
           exclude_binaries=True,
-          name='keagps',
+          name='keaigc',
           debug=True,
           bootloader_ignore_signals=False,
           strip=False,
@@ -45,10 +45,10 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                # upx_exclude=[],
-               name='keagps')
+               name='keaigc')
 
 app = BUNDLE(coll,
-             name='Kea GPS Downloader.app',
+             name='Kea IGC Forager.app',
              icon='packaging/app_icon.icns',
              bundle_identifier=None,
              info_plist={'CFBundleShortVersionString': '0.2.0',

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Kea GPS Downloader IGC file validation.
+"""Kea IGC Forager - IGC file validation.
 
 This script will read and validate that a given IGC file has not been tempered
 with. SHA256 checksum is calculated across for IGC conetents and G-record
@@ -8,7 +8,7 @@ signature authenticated with the Kea Public Key (ECC).
 
 Examples:
     You have to include the igc file to validate in your arguments::
-        $ ./vali-xea kea_gps_downloader.igc
+        $ ./vali-xea kea_igc_forager.igc
 
     For full help help text run::
         $ ./vali-xea -h
@@ -119,7 +119,7 @@ def _parse_args():
     from packaging.version import get_version
 
     parser = ArgumentParser(prog='vali-xea',
-                            description='Validate Kea GPS Downloader signed IGC files.')
+                            description='Validate Kea IGC Forager signed IGC files.')
     parser.add_argument('filename',
                         metavar='filename',
                         help='IGC file to validate')

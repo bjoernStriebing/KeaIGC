@@ -4,7 +4,7 @@ import biplist
 import os.path
 
 # .. Useful stuff ..............................................................
-application = defines.get('app', 'dist/Kea GPS Downloader.app')
+application = defines.get('app', 'dist/Kea IGC Forager.app')
 
 
 def icon_from_app(app_path):
@@ -27,7 +27,7 @@ symlinks = {'Applications': '/Applications'}
 # Volume icon
 icon = icon_from_app(application)
 icon_locations = {
-    'Kea GPS Downloader.app': (590, 105),
+    'Kea IGC Forager.app': (590, 105),
     'Applications': (590, 341),
     '.background.jpg': (1100, 0),
     '.VolumeIcon.icns': (1100, 100)

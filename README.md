@@ -1,4 +1,4 @@
-# Kea GPS Downloader
+# Kea IGC Forager
 
 A simple and intuitive interface to download .igc files from your flight recorder to PC.
 Open source - if you have an instrument which is currently not supported I invite you to add to this project. ***Note: that is anything that isn't a Flymaster at the moment, sorry!***
@@ -35,7 +35,7 @@ Simply run `./packaging/build.sh [--so] [--dmg]`. This will do the following:
 * compile the rest of the app
 * if `--dmg` argument is provided: create installer image
 
-*Note: New or modified GPS classes require a private key signature. You can still compile and test your changes with the private key but any IGC files downloaded won't have the G-Record required to validate flights. When merging in your pull requests I will review your code and sign the GPS device library compiled from it. This may seem inconvenient but is necessary to ensure tracklogs can not be manipulated and signed with Kea GPS Downloader key*
+*Note: New or modified GPS classes require a private key signature. You can still compile and test your changes with the private key but any IGC files downloaded won't have the G-Record required to validate flights. When merging in your pull requests I will review your code and sign the GPS device library compiled from it. This may seem inconvenient but is necessary to ensure tracklogs can not be manipulated and signed with Kea IGC Forager key*
 
 
 ## Windows Developer Setup Guide

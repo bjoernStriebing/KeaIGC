@@ -44,11 +44,11 @@ if __name__ == '__main__':
 
     if not args.cmd:
         """Run the GUI app"""
-        from gui.keagpsapp import KeaGpsApp
-        app = KeaGpsApp()
+        from gui.keaigcapp import KeaIgcApp
+        app = KeaIgcApp()
         app.run()
 
     else:
         """Run the CMD app"""
-        import keagpscmd
-        keagpscmd.run(args)
+        import keaigccmd
+        keaigccmd.run(args)

@@ -16,7 +16,7 @@ MIN_LATITUDE = -90.
 MAX_LATITUDE = 90.
 MIN_LONGITUDE = -180.
 MAX_LONGITUDE = 180.
-CACHE_DIR = '/tmp/keagps/cache'
+CACHE_DIR = '/tmp/keaigc/cache'
 
 try:
     # fix if used within garden
