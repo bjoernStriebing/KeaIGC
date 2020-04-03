@@ -26,7 +26,7 @@ try:
 except KeyError:
     pass
 
-from types import Coordinate, Bbox
-from source import MapSource
-from view import MapView, MapMarker, MapLayer, MarkerMapLayer, \
+from .types import Coordinate, Bbox
+from .source import MapSource
+from .view import MapView, MapMarker, MapLayer, MarkerMapLayer, \
     MapMarkerPopup

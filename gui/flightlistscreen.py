@@ -1,7 +1,7 @@
 import os
 # import pytz
 import time
-import Queue as queue
+import queue
 from datetime import datetime
 # from tzlocal import get_localzone
 from kivy.lang import Builder
@@ -15,13 +15,12 @@ from kivy.uix.scrollview import ScrollView
 from kivy.properties import ListProperty, ObjectProperty
 from kivy.metrics import *
 
-from common import GuiLabel, GuiButton, GuiSelsectButton, GuiTextInput
+from .common import GuiLabel, GuiButton, GuiSelsectButton, GuiTextInput
+from .contrib.gardenmapview import MapView, MapMarkerPopup
+from . import animation
 from library import utc_to_local
 import gpsdevice
-import animation
-from contrib.gardenmapview import MapView, MapMarkerPopup
 
-# local_tz = get_localzone()
 
 Builder.load_string("""
 <FlightListScreen>:
@@ -288,9 +287,9 @@ class FlightListScreen(Screen):
         self.ids.offset_alt.text = '{} m'.format(flight_brief_header.altitude_baro
                                                  - flight_brief_header.altitude_gps)
         if not self.ids.replace_pilot.selected:
-            self.ids.pilot_name.text = flight_brief_header.pilot_name
+            self.ids.pilot_name.text = flight_brief_header.pilot_name.strip()
         if not self.ids.replace_glider.selected:
-            self.ids.glider_name.text = flight_brief_header.glider_name
+            self.ids.glider_name.text = flight_brief_header.glider_name.strip()
 
     def on_map_marker(self, instance, marker, *args, **kwargs):
         map = self.ids.map
@@ -357,10 +356,8 @@ class FlightListScreen(Screen):
 
     def _on_file_drop(self, window, file_path):
         path = file_path if os.path.isdir(file_path) else os.path.dirname(file_path)
+        path = path.decode()
         home_path = os.path.expanduser('~')
+        print(type(home_path), home_path, type(path), path)
         path = path.replace(home_path, '~')
         self.ids.export_path.text = path
-
-
-# def utc_to_local(utc_dt):
-#     return utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)

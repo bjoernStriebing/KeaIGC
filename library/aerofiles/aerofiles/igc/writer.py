@@ -18,7 +18,7 @@ class Writer:
 
     def __init__(self, fp=None):
         self.fp = fp
-        self._igc_text = ''
+        self._igc_text = b''
         self.fix_extensions = None
         self.k_record_extensions = None
 

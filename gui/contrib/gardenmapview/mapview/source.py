@@ -6,8 +6,8 @@ from kivy.metrics import dp
 from math import cos, ceil, log, tan, pi, atan, exp
 from . import MIN_LONGITUDE, MAX_LONGITUDE, MIN_LATITUDE, MAX_LATITUDE, \
     CACHE_DIR
-from downloader import Downloader
-from utils import clamp
+from .downloader import Downloader
+from .utils import clamp
 import hashlib
 
 

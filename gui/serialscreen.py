@@ -1,7 +1,6 @@
 import os
 from glob import glob
 from functools import partial
-
 from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
@@ -10,7 +9,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
 from kivy.metrics import *
 
-from common import GuiLabel, GuiButton
+from .common import GuiLabel, GuiButton
 import gpsdevice
 
 

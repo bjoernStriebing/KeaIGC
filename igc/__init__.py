@@ -1,13 +1,13 @@
 import sys
-import vali
+from . import vali
 try:
     if getattr(sys, 'frozen', False):
         raise ImportError("Won't import private module in compiled application")
 
-    import _private.save as save
-    print "Imported private IGC signing source successfully"
+    from ._private import save
+    print("Imported private IGC signing source successfully")
 
 except ImportError as e:
-    print e  # debug
-    print "Import IGC signing from shared object"
-    import save as save
+    # print(e)  # debug
+    print("Import IGC signing from shared object")
+    from . import save

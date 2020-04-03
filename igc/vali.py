@@ -90,7 +90,7 @@ class ValiResult(Exception):
         try:
             logger.critical(str(self))
         except NameError:
-            print self
+            print(self)
         sys.exit(status.code)
 
     def __str__(self):

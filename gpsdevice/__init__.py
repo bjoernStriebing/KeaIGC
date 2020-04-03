@@ -22,7 +22,7 @@ def import_lib(developer=False):
         from lib import gpsbase
         from lib import gpsflymaster
     else:
-        print "Imported GPS devices from source, not signing IGCs"
+        print("Imported GPS devices from source, not signing IGCs")
         from . import gpsmisc
         from . import gpsbase
         from . import gpsflymaster

@@ -29,10 +29,11 @@ class ResponseIdentification(Struct):
 class ResponseList(Struct):
     """NMEA GPS tracklist response."""
     def __init__(self, total, num, date, time, duration):
-        t = datetime.strptime(duration, '%H:%M:%S')
+        t = datetime.strptime(duration.decode(), '%H:%M:%S')
         self.total = int(total)
         self.num = int(num)
-        self.datetime = datetime.strptime(' '.join([date, time]), '%d.%m.%y %H:%M:%S')
+        self.datetime = datetime.strptime(' '.join([date.decode(), time.decode()]),
+                                          '%d.%m.%y %H:%M:%S')
         self.duration = timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
 
 
@@ -46,8 +47,8 @@ class NMEAResponse(object):
 
     def parse(self):
         """Parse raw_data and return respecive response object if crc valid."""
-        stripped_data = self.raw_data.strip('$\r\n')
-        self.data, crc = stripped_data.split('*')
+        stripped_data = self.raw_data.strip(b'$\r\n')
+        self.data, crc = stripped_data.split(b'*')
         self.checksum = int(crc, 16)
         if not self.is_valid():
             logger.warning('{} response is invalid, crc mismatch'.format(self.__class__.__name__))
@@ -60,12 +61,12 @@ class NMEAResponse(object):
 
     def interprete(self):
         """Return actual response object depending on keyword in NMEA resonse."""
-        data = self.data.split(',')
+        data = self.data.split(b',')
         kw = data[0]
-        if kw == 'PFMSNP':
+        if kw == b'PFMSNP':
             response = ResponseIdentification(*data[1:])
             self.gps.progress = 1.0
-        elif kw == 'PFMLST':
+        elif kw == b'PFMLST':
             response = ResponseList(*data[1:])
             self.gps.progress = float(response.num) / float(response.total)
         else:
@@ -144,7 +145,10 @@ class GpsDeviceBase(object):
 
     @manufacturer.setter
     def manufacturer(self, value):
-        self._manufacturer = value
+        if isinstance(value, bytes):
+            self._manufacturer = value.decode()
+        else:
+            self._manufacturer = value
 
     @property
     def model(self):
@@ -152,7 +156,10 @@ class GpsDeviceBase(object):
 
     @model.setter
     def model(self, value):
-        self._model = value
+        if isinstance(value, bytes):
+            self._model = value.decode()
+        else:
+            self._model = value
 
     @property
     def serial(self):
@@ -184,8 +191,10 @@ class GpsDeviceBase(object):
 
     @pilot_name.setter
     def pilot_name(self, value):
-        name = filter(lambda c: c in printable, value)
-        self._pilot_name = value.strip()
+        name = list(filter(lambda c: c in printable_bytes, value))
+        if isinstance(value, bytes):
+            name = bytes(name).decode()
+        self._pilot_name = name.strip()
 
     @property
     def pilot_overwrite(self):
@@ -238,7 +247,8 @@ class GpsDeviceBase(object):
         else:
             self.progress = 1.0
             logger.debug('{} receive mode is {} but no response expected'.format(self.__class__.__name__, self.mode))
-        self.io.write(cmd_str + '\r\n')
+        cmd_str += '\r\n'
+        self.io.write(cmd_str.encode())
 
     def read(self, **kwargs):
         """
@@ -289,7 +299,7 @@ class GpsDeviceBase(object):
             self.serial = response.serial
             self.fw_version = response.fw_version
             self.pilot_name = response.pilot
-            print '{:3.0f}%'.format(self.progress * 100), response
+            print('{:3.0f}%'.format(self.progress * 100), response)
 
     def validate_id(self):
         if self.manufacturer not in self.MANUFACTURER_NAMES:
@@ -308,14 +318,14 @@ class GpsDeviceBase(object):
             self.tracklist[response.num] = response
             if ret_queue is not None:
                 ret_queue.put((self.progress, response))
-            print '{:3.0f}%'.format(self.progress * 100), response
+            print('{:3.0f}%'.format(self.progress * 100), response)
 
     def get_flight_brief(self, num):
         """Download Flight Information Record and Key Position only."""
         try:
             entry = self.tracklist[int(num)]
         except KeyError:
-            print 'Track number {} out of range'.format(num)
+            print('Track number {} out of range'.format(num))
         flight_date = entry.datetime.strftime('%y%m%d%H%M%S')
         self._get_flight.reset()
         self.send(self._get_flight, data=[flight_date])
@@ -326,7 +336,7 @@ class GpsDeviceBase(object):
         try:
             entry = self.tracklist[int(num)]
         except KeyError:
-            print 'Track number {} out of range'.format(num)
+            print('Track number {} out of range'.format(num))
         flight_date = entry.datetime.strftime('%y%m%d%H%M%S')
         self._get_flight.reset()
         self.send(self._get_flight, data=[flight_date])
@@ -354,10 +364,10 @@ class TrackHeader(Struct):
         self.timestamp = timestamp
         self.altitude_gps = kwargs.pop('alt_gps', None)
         self.altitude_baro = kwargs.pop('alt_baro', None)
-        self.pilot_name = filter(lambda c: c in printable,
-                                 kwargs.pop('pilot_name', '').strip())
-        self.glider_name = filter(lambda c: c in printable,
-                                  kwargs.pop('glider_name', '').strip())
+        self.pilot_name = ''.join(filter(lambda c: c in printable,
+                                         kwargs.pop('pilot_name', '')))
+        self.glider_name = ''.join(filter(lambda c: c in printable,
+                                          kwargs.pop('glider_name', '')))
 
 
 def crc_checksum(data):
@@ -399,3 +409,6 @@ def get_class(device):
     for c in dir(device):
         if c.lower() == name:
             return vars(device)[c]
+
+
+printable_bytes = printable.encode()

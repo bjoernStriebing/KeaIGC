@@ -5,6 +5,6 @@
 *.ini
 *.igc
 .DS_Store
-venv/
+venv*/
 build/
 dist/

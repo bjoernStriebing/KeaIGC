@@ -1,23 +1,27 @@
 import os
-import Queue as queue
+import queue
 from threading import Thread
 from glob import glob
 from serial import SerialException
 from kivy.app import App
 from kivy.clock import Clock, mainthread
+from kivy.config import Config
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager
 from kivy.metrics import dp
 
 from igc import save as igc_save
 from library import mkdir_p
-from gpsclassscreen import GpsClassScreen
-from serialscreen import SerialScreen
-from flightlistscreen import FlightListScreen
-from popups.message import MessagePopup
+from .gpsclassscreen import GpsClassScreen
+from .serialscreen import SerialScreen
+from .flightlistscreen import FlightListScreen
+from .popups.message import MessagePopup
 
-import animation
-from common import GuiColor
+from . import animation
+from .common import GuiColor
+
+
+Config.set('kivy', 'exit_on_escape', '0')
 
 
 class KeaIgcDownloader(ScreenManager, GuiColor):
@@ -150,6 +154,7 @@ class GpsInterface(Thread):
             button.disabled = True
             self.gui.show_message('Serial port "{}" does not match GPS device {}'.format(
                 port, self.gps.__class__.GUI_NAME))
+            raise
             return
         finally:
             self.gui.done()

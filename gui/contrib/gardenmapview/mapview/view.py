@@ -20,8 +20,8 @@ from kivy.compat import string_types
 from math import ceil
 from . import MIN_LONGITUDE, MAX_LONGITUDE, MIN_LATITUDE, MAX_LATITUDE, \
     CACHE_DIR, Coordinate, Bbox
-from source import MapSource
-from utils import clamp
+from .source import MapSource
+from .utils import clamp
 from itertools import takewhile
 
 import webbrowser

@@ -1,5 +1,6 @@
-from binascii import hexlify
 from datetime import datetime
+from functools import reduce
+from operator import __add__
 from gpsdevice.gpsbase import *
 from gpsdevice.gpsmisc import *
 
@@ -48,7 +49,7 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
         key_record = None
         fix_count = 0
         while True:
-            # print '--------------------------------------------------------'
+            # print('--------------------------------------------------------')
             packet = BinPacket()
             packet.id = self.io.read(2)
             if packet.id == 'a3a3':
@@ -70,39 +71,39 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
             packet.crc = self.io.read(1)
 
             if not packet.is_valid:
-                # print 'NACK', packet.id, packet.length, 'crc', packet.crc, '<->', crc_checksum([packet.length] + packet.data)
+                # print('NACK', packet.id, packet.length, 'crc', packet.crc, '<->', crc_checksum([packet.length] + packet.data))
                 self.io.write(b'\xb2')
-                # print '--------------------------------------------------------\n\n'
+                # print('--------------------------------------------------------\n\n')
                 # TODO: max crc errors
                 continue
 
             if packet.id == 'a0a0':
-                # print 'Flight Information Record\n'
+                # print('Flight Information Record\n')
                 fir = self._fir = FlightInformationRecord(packet)
-                # print 'ID:      ', packet.id
-                # print 'length:  ', packet.length
-                # print 'fw ver:  ', fir.firmware_version
-                # print 'hw ver:  ', fir.hardware_version
-                # print 'serial:  ', fir.serial
-                # print 'P number:', fir.pilot_number
-                # print 'P name:  ', fir.pilot_name
-                # print 'G brand: ', fir.glider_brand
-                # print 'G model: ', fir.glider_model
-                # print 'CRC:     ', packet.crc
+                # print('ID:      ', packet.id)
+                # print('length:  ', packet.length)
+                # print('fw ver:  ', fir.firmware_version)
+                # print('hw ver:  ', fir.hardware_version)
+                # print('serial:  ', fir.serial)
+                # print('P number:', fir.pilot_number)
+                # print('P name:  ', fir.pilot_name)
+                # print('G brand: ', fir.glider_brand)
+                # print('G model: ', fir.glider_model)
+                # print('CRC:     ', packet.crc)
             elif packet.id == 'a1a1':
-                # print 'Key Track Position Record\n'
+                # print('Key Track Position Record\n')
                 last_fix = self._kr = key_record = KeyTrackPositionRecord(packet)
                 tracklog = self._tl = [key_record]
                 fix_count = 1
-                # print 'ID:      ', packet.id
-                # print 'length:  ', packet.length
-                # print 'fix flag:', key_record.fix_flag
-                # print 'latitude:', key_record.latitude
-                # print 'lngitude:', key_record.longitude
-                # print 'altitude:', key_record.altitude_gps
-                # print 'baro:    ', key_record.altitude_baro
-                # print 'time:    ', key_record.timestamp
-                # print 'CRC:     ', packet.crc
+                # print('ID:      ', packet.id)
+                # print('length:  ', packet.length)
+                # print('fix flag:', key_record.fix_flag)
+                # print('latitude:', key_record.latitude)
+                # print('lngitude:', key_record.longitude)
+                # print('altitude:', key_record.altitude_gps)
+                # print('baro:    ', key_record.altitude_baro)
+                # print('time:    ', key_record.timestamp)
+                # print('CRC:     ', packet.crc)
                 if header_only:
                     self.io.write(b'\xb3')
                     self.progress = 1
@@ -118,23 +119,23 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
                         tracklog.append(fix)
                     except AttributeError:
                         tracklog.append(fix)
-                    # print 'fix flag:', fix.fix_flag
-                    # print 'latitude:', fix.latitude
-                    # print 'lngitude:', fix.longitude
-                    # print 'altitude:', fix.altitude_gps
-                    # print 'baro:    ', fix.altitude_baro
-                    # print 'time:    ', fix.timestamp
-                    # print ''
+                    # print('fix flag:', fix.fix_flag)
+                    # print('latitude:', fix.latitude)
+                    # print('lngitude:', fix.longitude)
+                    # print('altitude:', fix.altitude_gps)
+                    # print('baro:    ', fix.altitude_baro)
+                    # print('time:    ', fix.timestamp)
+                    # print('')
                     offset += 6
                     fix_count += 1
                     last_fix = fix
-                # print 'Got {} fixes'.format(fix_count)
+                # print('Got {} fixes'.format(fix_count))
 
             if progress_done_count is not None:
                 self.progress = float(fix_count) / progress_done_count
-                # print '{:3.0f}%'.format(self.progress * 100), last_fix or fir
+                # print('{:3.0f}%'.format(self.progress * 100), last_fix or fir)
             self.io.write(b'\xb1')
-        # print '--------------------------------------------------------\n\n'
+        # print('--------------------------------------------------------\n\n')
         # TODO break on error and returns
 
     def get_flight_brief(self, num):
@@ -167,7 +168,7 @@ class BinPacket(Struct):
 
     @id.setter
     def id(self, value):
-        id = hexlify(bytearray(value))
+        id = value.hex()
         self.__data[0:len(id)] = [id[i:i + 2] for i in range(0, len(id), 2)]
         self._payload_offset = len(value) + 1  # +1 for length
 
@@ -187,7 +188,7 @@ class BinPacket(Struct):
 
     @data.setter
     def data(self, value, crc=None):
-        payload = map(ord, value)
+        payload = list(value)
         self.__data = self.__data[:self._payload_offset] + payload + [crc]
         if crc is None:
             self._valid = False
@@ -227,7 +228,11 @@ class FlightInformationRecord(Struct):
     @pilot_number.setter
     def pilot_number(self, value):
         try:
-            self._pilot_number = ''.join(map(chr, value))
+            s = ''.join(map(chr, value))
+            if isinstance(s, bytes):
+                self._pilot_number = s.decode()
+            else:
+                self._pilot_number = s
         except TypeError:
             self._pilot_number = value
 
@@ -238,7 +243,11 @@ class FlightInformationRecord(Struct):
     @pilot_name.setter
     def pilot_name(self, value):
         try:
-            self._pilot_name = ''.join(map(chr, value))
+            s = ''.join(map(chr, value))
+            if isinstance(s, bytes):
+                self._pilot_name = s.decode()
+            else:
+                self._pilot_name = s
         except TypeError:
             self._pilot_name = value
 
@@ -249,7 +258,11 @@ class FlightInformationRecord(Struct):
     @glider_brand.setter
     def glider_brand(self, value):
         try:
-            self._glider_brand = ''.join(map(chr, value))
+            s = ''.join(map(chr, value))
+            if isinstance(s, bytes):
+                self._glider_brand = s.decode()
+            else:
+                self._glider_brand = s
         except TypeError:
             self._glider_brand = value
 
@@ -260,7 +273,11 @@ class FlightInformationRecord(Struct):
     @glider_model.setter
     def glider_model(self, value):
         try:
-            self._glider_model = ''.join(map(chr, value))
+            s = ''.join(map(chr, value))
+            if isinstance(s, bytes):
+                self._glider_model = s.decode()
+            else:
+                self._glider_model = s
         except TypeError:
             self._glider_model = value
 
@@ -332,7 +349,7 @@ class PositionRecord(Struct, ConstantsFlymaster):
 
     def _bin2int(self, bytes):
         if isinstance(bytes, list):
-            return int(hexlify(bytearray(reversed(bytes))), 16)
+            return reduce(lambda msb, lsb: (msb << 8) + lsb, reversed(bytes))
         else:
             return int(bytes)
 

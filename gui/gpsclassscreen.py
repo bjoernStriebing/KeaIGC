@@ -5,7 +5,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.metrics import *
 
-from common import GuiLabel, GuiButton
+from .common import GuiLabel, GuiButton
 import gpsdevice
 
 
