@@ -184,6 +184,9 @@ class GpsInterface(Thread):
             igc_save.download(self.gps, flight, output_file)
         except igc_save.UnsignedIGCException:
             self.gui.show_message("IGC file wasn't signed because there was a problem validating the GPS module")
+        else:
+            home_path = os.path.expanduser('~')
+            self.gui.show_message("Signed IGC saved at {}".format(output_file.replace(home_path, '~')))
         self.gui.unselect_flight(flight)
 
     def set_pilot_overwrite(self, overwrite):

@@ -24,16 +24,14 @@ rm _setup_gpsdevice.py*
 
 if $SHAREDOBJ; then
     # compile the igc signing library
-    rm igc/save.so
+    rm igc/save*.so
     cp "$PACKAGING_DIR/setup_igc_so.py" _setup_igc_so.py
     python _setup_igc_so.py build_ext --inplace
     rm _setup_igc_so.py*
     if [ $? -eq 0 ]; then
-        mv igc/_private/save.so igc/save.so
+        mv igc/_private/save.cpython-37m-darwin.so igc/
     fi
 fi
-
-# mv igc/_private igc/__private
 
 # build the actual app
 cp "$PACKAGING_DIR/keaigc.spec" _keaigc.spec
@@ -46,11 +44,10 @@ pyinstaller \
     --workpath="build" \
     _keaigc.spec
 rm _keaigc.spec
-# mv igc/__private igc/_private
 
 if $DMGIMAGE; then
     # update installer
-    rm packaging/Kea\ PG\ Logbook.dmg || true
+    rm packaging/Kea\ IGC\ Forager.dmg || true
     dmgbuild -s "packaging/osx_dmg_settings.py" \
       "Kea IGC Forager" \
       "dist/Kea IGC Forager.dmg"

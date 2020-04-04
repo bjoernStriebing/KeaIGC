@@ -1,6 +1,7 @@
 *~
 !*/_*
 *.pyc
+__pycache__
 *.log
 *.ini
 *.igc

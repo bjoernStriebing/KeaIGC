@@ -8,20 +8,26 @@ block_cipher = None
 
 a = Analysis(['keaigc.py'],
              pathex=['library/aerofiles'],
-             binaries=[],
-             datas=[],
-             hiddenimports=['Crypto.Cipher.Blowfish', 'library', 'aerofiles', 'gpsdevice.lib'],
+             binaries=[('gpsdevice/lib/gpsbase.cpython-37m-darwin.so', 'gpsdevice/lib' ),
+                       ('gpsdevice/lib/gpsmisc.cpython-37m-darwin.so', 'gpsdevice/lib' ),
+                       ('gpsdevice/lib/gpsflymaster.cpython-37m-darwin.so', 'gpsdevice/lib' )],
+             datas=[('gpsdevice/lib/gpsbase.cpython-37m-darwin.sig', 'gpsdevice/lib' ),
+                    ('gpsdevice/lib/gpsmisc.cpython-37m-darwin.sig', 'gpsdevice/lib' ),
+                    ('gpsdevice/lib/gpsflymaster.cpython-37m-darwin.sig', 'gpsdevice/lib' ),
+                    ('gui/img', 'gui/img'),
+                    ('gui/contrib/gardenmapview/mapview/icons',
+                        'gui/contrib/gardenmapview/mapview/icons')],
+             # hiddenimports=['Crypto.Cipher.Blowfish', 'library', 'aerofiles',
+             #                'pkg_resources.py2_warn'],
+             hiddenimports=[#'library', 'aerofiles',
+                            'pkg_resources.py2_warn'],
              hookspath=[],
              runtime_hooks=[],
-             excludes=['igc.private'],
+             excludes=['igc._private'],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher)
 # **dependencies)
-
-a.datas += [('gui/img', 'gui/img', 'DATA'),
-            ('gui/contrib/gardenmapview/mapview/icons',
-             'gui/contrib/gardenmapview/mapview/icons', 'DATA')]
 
 pyz = PYZ(a.pure,
           a.zipped_data,
@@ -29,7 +35,7 @@ pyz = PYZ(a.pure,
 
 exe = EXE(pyz,
           a.scripts,
-          # [],
+          [],
           exclude_binaries=True,
           name='keaigc',
           debug=True,
