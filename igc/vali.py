@@ -24,7 +24,7 @@ Retuns:
         ERROR   101 STATUS_ERR_FILE_OTHER  The IGC file is not supported by vali program
         ERROR   102 STATUS_ERR_VALI_ABORT  The vali program was aborted
         ERROR   200 STATUS_ERR_VALI_ERROR  Unexpected error in vali program
-        ERROR   201 STATUS_ERR_VALI_PARAM   Invalid input parameters
+        ERROR   201 STATUS_ERR_VALI_PARAM  Invalid input parameters
 
     Last line of stdout is will always show::
         IGCVALI:STATE,N
@@ -145,7 +145,7 @@ STATUS_ERR_VALI_ERROR = FaiStatus(status='ERROR', code=200)
 STATUS_ERR_VALI_PARAM = FaiStatus(status='ERROR', code=201)
 
 
-PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
+PUBLIC_KEY = b"""-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/Z+Q35Psokd/bpC1fJ7EZOKLyaqx
 MNi9Dcsb+IPYVdVk6EivVG4Wu8+KWXcRI/q5VfHsd4t//54OhVnbxfpzxg==
 -----END PUBLIC KEY-----"""
@@ -157,38 +157,42 @@ def main(args):
     Read IGC file and validate tracklog SHA256 checksum using G-record.
     """
 
-    sig_b64 = ''
-    hash = SHA256.new()
+    sig_b16 = b''
+    SHA256 = hashes.SHA256()
+    hash = hashes.Hash(SHA256, default_backend())
 
     logger.debug('... open igc file {}'.format(os.path.abspath(args.filename)))
     with open(args.filename, 'rb') as igc_file:
         logger.debug('... look for AXEA tag in line 1')
         line = igc_file.readline()
-        if line.startswith('AXEA'):
+        if line.startswith(b'AXEA'):
             hash.update(line)
         else:
-            logger.debug('file is not a Kea IGC')
+            logger.warning('file is not a Kea IGC')
             raise ValiResult(STATUS_ERR_FILE_OTHER)
 
         logger.debug('... read full igc file')
         for i, line in enumerate(igc_file.readlines()):
-            if line[0] in ('A', 'B', 'C', 'H'):
+            if chr(line[0]) in ('A', 'B', 'C', 'H'):
                 hash.update(line)
-            elif line[0] in ('G'):
+            elif chr(line[0]) in ('G'):
                 logger.debug('... found signature in line {}'.format(i))
-                sig_b64 += line.strip('G\r\n')
+                sig_b16 += line.strip(b'G\r\n')
             else:
                 logger.debug('... ignore line with tag {}'.format(line.split()[0]))
         logger.debug('... parsed {} lines in igc file'.format(i + 1))
-        logger.debug('... signature is: {}'.format(sig_b64))
+        logger.debug('... signature is: {}'.format(sig_b16))
 
     logger.debug('... validate signature')
     try:
-        signature = base64.b16decode(sig_b64)
-        key = ECC.import_key(PUBLIC_KEY)
-        verifier = DSS.new(key, 'fips-186-3')
-        verifier.verify(hash, signature)
-    except TypeError as e:
+        digest = hash.finalize()
+        logger.debug('... igc digested')
+        signature = base64.b16decode(sig_b16)
+        logger.debug('... signature decoded')
+        key = serialization.load_pem_public_key(PUBLIC_KEY, default_backend())
+        logger.debug('... public key loaded')
+        key.verify(signature, digest, ec.ECDSA(utils.Prehashed(SHA256)))
+    except InvalidSignature as e:
         logger.debug('validation failed')
         raise ValueError(str(e))
     else:
@@ -197,27 +201,30 @@ def main(args):
 
 if __name__ == '__main__':
     global logger
+    import sys
+    import logging
+    logging.basicConfig(stream=sys.stdout, format='%(message)s')
+    logger = logging.getLogger(__file__)
+    logger.setLevel(logging.ERROR)
+
     try:
         import os
-        import sys
         import base64
-        import logging
         import argparse
         import traceback
-        from Crypto.Hash import SHA256
-        from Crypto.PublicKey import ECC
-        from Crypto.Signature import DSS
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import utils
+        from cryptography.hazmat.primitives.asymmetric import ec
+        from cryptography.exceptions import InvalidSignature
 
         class ArgumentParser(argparse.ArgumentParser):
             def error(self, message):
-                if message == 'too few arguments':
+                if message.startswith('the following arguments are required'):
                     self.print_usage()
                     raise ValiResult(STATUS_ERR_FILE_OPEN)
                 raise ValiResult(STATUS_ERR_VALI_PARAM, Exception(message))
-
-        logging.basicConfig(stream=sys.stdout, format='%(message)s')
-        logger = logging.getLogger(__file__)
-        logger.setLevel(logging.ERROR)
 
         args = _parse_args()
         main(args)
