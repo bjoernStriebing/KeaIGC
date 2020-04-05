@@ -50,17 +50,19 @@ This may seem inconvenient but is necessary to ensure tracklogs can not be manip
 #### vali-xea.exe 32 bit Developer Setup
 
 The following assumes a parallel install of 32 bit python alongside existing 64 bit version
-1. Download `python2.7.x.msi` installer (32bit)
-1. Install to custom path: e.g. `C:\python2.7_32` while also selecting option to add python to your system path
-1. Rename `C:\python2.7_32\python.exe` to discern from 64 bit python: e.g. `C:\python2.7_32\python_32.exe`
+1. Download `python3.7.x` [installer (32bit)](https://www.python.org/ftp/python/3.7.4/python-3.7.4.exe)
+1. Install to custom path: e.g. `C:\python3.7_32` while also selecting option to add python to your system path
+1. Rename `C:\python3.7-32\python.exe` to discern from 64 bit python: e.g. `C:\python3.7-32\python3_32.exe`
 1. Open cmd
-1. Upgrade pip: `python_32 -m pip install --upgrade pip`
-1. Install virtualenv: `python_32 -m pip install virtualenv`
+1. Upgrade pip: `python3_32 -m pip install --upgrade pip`
+1. Install virtualenv: `python3_32 -m pip install virtualenv`
 1. Change into this project folder
-1. Create virtualenv: `python_32 -m virtualenv --no-site-packages venv`
-1. Activate virtualenv: `venv\Scripts\activate`
+1. Create virtualenv: `python3_32 -m virtualenv --no-site-packages venv3`
+1. Activate virtualenv: `venv3\Scripts\activate`
 1. Install dependencies: `pip install -r requirements_vali.txt`
 
 ###### Building vali-xea.exe
-1. `pyinstaller --onefile vali.spec`
+1. Test the python script: `python3_32 igc\vali.py <IGC_FILE>`
+1. `pyinstaller --onefile packaging\vali.spec`
 1. Executable should be in `dist\vali-xea.exe`
+1. Test the exe: `dist\vali-xea.exe <IGC_FILE>`
