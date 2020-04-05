@@ -13,7 +13,7 @@ Open source - if you have an instrument which is currently not supported I invit
 <img src="Screenshots/Download%20Page.png" height=400>
 
 #### Installing
-1. [Find the latest release here](https://github.com/bjoernStriebing/KeaIGC/releases/latest)
+1. **[Find the latest release here](https://github.com/bjoernStriebing/KeaIGC/releases/latest)**
 1. Download and open **Kea.IGC.Forager.dmg**
 1. Then simply drag the app icon into your Applications floder <img src="Screenshots/Installer.png" height=400>
 1. Done. Ready to launch the app.
