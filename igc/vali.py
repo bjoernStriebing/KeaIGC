@@ -37,6 +37,8 @@ Todo:
 
 """
 
+VERSION = '0.3.0'
+
 
 class FaiStatus(object):
     """Simple namespace wrapper and formatter for validation return status"""
@@ -116,7 +118,6 @@ def _parse_args():
         args (namespace)
     """
     sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-    from packaging.version import get_version
 
     parser = ArgumentParser(prog='vali-xea',
                             description='Validate Kea IGC Forager signed IGC files.')
@@ -128,7 +129,7 @@ def _parse_args():
                         help='enable verbose debug print')
     parser.add_argument('--version',
                         action='version',
-                        version='%(prog)s {}'.format(get_version()))
+                        version='%(prog)s {}'.format(VERSION))
     args = parser.parse_args()
     if args.verbose:
         logger.setLevel(logging.DEBUG)

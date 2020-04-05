@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['igc\\vali.py'],
+a = Analysis(['..\\igc\\vali.py'],
              pathex=['C:\\Users\\Bjorn\\Development\\KeaIgc'],
              binaries=[],
              datas=[],
