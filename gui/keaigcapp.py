@@ -187,8 +187,6 @@ class GpsInterface(Thread):
 
     @_threaded
     def set_port(self, button, port):
-        if self.gps.io is not None and port == self.gps.io.port:
-            return
         try:
             self.gps.io = port
             id = self.gps.get_id()

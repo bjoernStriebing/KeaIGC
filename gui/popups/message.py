@@ -11,7 +11,7 @@ import gpsdevice
 
 Builder.load_string("""
 <MessagePopup>:
-    size_hint: .9, .6
+    size_hint: .9, .45
     pos_hint: {'x': (1 - self.size_hint_x) / 2, 'y': (1 - self.size_hint_y) / 2}
     BoxLayout:
         orientation: "vertical"
