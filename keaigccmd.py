@@ -5,7 +5,7 @@ from serial.serialutil import SerialException
 
 import gpsdevice
 from igc import save as igc_save
-from library import mkdir_p, utc_to_local
+from library import utc_to_local
 
 
 def run(args):
@@ -78,7 +78,7 @@ def print_flight_list(flights):
 def download_flight(gps, flight, output_file):
     output_file = os.path.expanduser(output_file)
     output_dir = os.path.dirname(output_file)
-    mkdir_p(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     try:
         igc_save.download(gps, flight, output_file)
     except igc_save.UnsignedIGCException as e:

@@ -11,6 +11,10 @@ for i in "$@"; do
     esac
 done
 
+# version setup
+VERSION=$(git describe --tags --long | \
+          awk '{split($0,t,"-"); if (t[2] == 0) {print t[1]} else {print $0}}')
+
 rm -rf build && mkdir build
 rm -rf dist && mkdir dist
 
@@ -34,7 +38,8 @@ if $SHAREDOBJ; then
 fi
 
 # build the actual app
-cp "$PACKAGING_DIR/keaigc.spec" _keaigc.spec
+sed "s/'CFBundleShortVersionString': '.*'/'CFBundleShortVersionString': '$VERSION'/" \
+    "$PACKAGING_DIR/keaigc.spec" > _keaigc.spec
 pyinstaller \
     -y \
     --debug all \

@@ -29,8 +29,8 @@ icon = icon_from_app(application)
 icon_locations = {
     'Kea IGC Forager.app': (590, 105),
     'Applications': (590, 341),
-    '.background.jpg': (1100, 0),
-    '.VolumeIcon.icns': (1100, 100)
+    '.VolumeIcon.icns': (2400, 100),
+    '.background.png': (2400, 100),
 }
 
 # .. Window configuration ......................................................

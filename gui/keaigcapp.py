@@ -6,22 +6,57 @@ from serial import SerialException
 from kivy.app import App
 from kivy.clock import Clock, mainthread
 from kivy.config import Config
+from kivy.core.window import Window
+from kivy.lang.builder import Builder
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager
+from kivy.uix.relativelayout import RelativeLayout
 from kivy.metrics import dp
 
 from igc import save as igc_save
-from library import mkdir_p
 from .gpsclassscreen import GpsClassScreen
 from .serialscreen import SerialScreen
 from .flightlistscreen import FlightListScreen
 from .popups.message import MessagePopup
+from .popups.confirm import ConfirmPopup
 
 from . import animation
 from .common import GuiColor
 
 
 Config.set('kivy', 'exit_on_escape', '0')
+
+Builder.load_string("""
+<RootWidget>:
+    main_screen: main_screen
+    blur_effect: blur_effect.__self__
+
+    KeaIgcDownloader:
+        id: main_screen
+        pos: 0, 0
+        size_hint: 1, 1
+
+    Image:
+        id: blur_effect
+        pos: 0, 0
+        size_hint: 1, 1
+        # TODO rerender the image on window resize instead of stetching the
+        allow_stretch: True
+        keep_ratio: False
+""")
+
+
+class RootWidget(RelativeLayout):
+    blur_effect = ObjectProperty()
+    main_screen = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        Window.clearcolor = (1, 1, 1, 1)
+        super(RootWidget, self).__init__(**kwargs)
+
+    def on_parent(self, instance, parent):
+        if parent is not None:
+            self.remove_widget(self.blur_effect)  # remove effect for performace
 
 
 class KeaIgcDownloader(ScreenManager, GuiColor):
@@ -117,13 +152,20 @@ class KeaIgcDownloader(ScreenManager, GuiColor):
     def show_message(self, message):
         MessagePopup(message)
 
+    @mainthread
+    def suggest_update(self, release_ver, my_ver, dl_size, continue_update):
+        ConfirmPopup("An update is available.\n\nYour version is {}.\n\n\nDownload {:.1f} MB to upgrade to version {}?".format(
+                     my_ver, dl_size / 1000000, release_ver),
+                     ok_callback=lambda e=continue_update: e.set())
+
 
 class KeaIgcApp(App):
 
     def build(self):
         self.icon = 'gui/img/app_icon.png'
-        self.gui = KeaIgcDownloader()
-        return self.gui
+        self.root_widget = RootWidget()
+        self.gui = self.root_widget.main_screen
+        return self.root_widget
 
 
 class GpsInterface(Thread):
@@ -180,7 +222,7 @@ class GpsInterface(Thread):
         try:
             output_file = os.path.expanduser(output_file)
             output_dir = os.path.dirname(output_file)
-            mkdir_p(output_dir)
+            os.makedirs(output_dir, exist_ok=True)
             igc_save.download(self.gps, flight, output_file)
         except igc_save.UnsignedIGCException:
             self.gui.show_message("IGC file wasn't signed because there was a problem validating the GPS module")
@@ -199,11 +241,10 @@ class GpsInterface(Thread):
         self.gps = device.get_class(device)(port=None)
         while True:
             func, kwargs = joblist.get()
-            func(self, **kwargs)
-            # try:
-            #     func(self, **kwargs)
-            # except Exception as e:
-            #     print e
+            try:
+                func(self, **kwargs)
+            except Exception as e:
+                print(e)
 
     def _poll_progress(self):
         progress = self.gps.progress

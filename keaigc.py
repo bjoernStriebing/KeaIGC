@@ -45,7 +45,9 @@ if __name__ == '__main__':
     if not args.cmd:
         """Run the GUI app"""
         from gui.keaigcapp import KeaIgcApp
+        from packaging.autoupdate import KeaIgcUpdate
         app = KeaIgcApp()
+        autoupdate = KeaIgcUpdate(app)
         app.run()
 
     else:
