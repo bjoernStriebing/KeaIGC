@@ -46,7 +46,7 @@ if __name__ == '__main__':
         """Run the GUI app"""
         from gui.keaigcapp import KeaIgcApp
         from packaging.autoupdate import KeaIgcUpdate
-        app = KeaIgcApp()
+        app = KeaIgcApp(title='Kea IGC Forager')
         autoupdate = KeaIgcUpdate(app)
         app.run()
 
