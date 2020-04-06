@@ -18,6 +18,8 @@ Open source - if you have an instrument which is currently not supported I invit
 1. Then simply drag the app icon into your Applications folder <img src="Screenshots/Installer.png" height=400>
 1. Done. Ready to launch the app.
 
+In case there are no suitable ports listed after connecting your instrument [please see the troubleshooting pages for help](https://github.com/bjoernStriebing/KeaIGC/wiki/Troubleshooting)
+
 ## OSX Developer Setup Guide
 
 1. Install `python3.7` via homebrew and make sure it's added to your path
