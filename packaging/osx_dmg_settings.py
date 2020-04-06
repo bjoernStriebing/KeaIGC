@@ -35,7 +35,10 @@ icon_locations = {
 
 # .. Window configuration ......................................................
 window_rect = ((305, 189), (800, 494))
-background = 'packaging/dmg_background.png'
+if os.path.isfile('packaging/dmg_background.png'):
+    background = 'packaging/dmg_background.png'
+else:
+    background = None
 show_status_bar = False
 show_tab_view = False
 show_toolbar = False
