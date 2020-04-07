@@ -55,7 +55,7 @@ class KeaIgcUpdate(Thread):
         try:
             with open(plist, 'rb') as plist_file:
                 plist_data = PlistParser.parse(plist_file)
-                current_version = plist_data['CFBundleShortVersionString']
+                current_version = plist_data['CFBundleShortVersionString'].strip('v')
         except (IOError, InvalidPlistException, KeyError):
             return
 
