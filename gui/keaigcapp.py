@@ -74,12 +74,18 @@ class KeaIgcDownloader(ScreenManager, GuiColor):
         self.current = 'devices'
         self.gps = None
 
-    def device_selected(self, button, device):
+    @mainthread
+    def device_selected(self, *args):
         self.current = 'ports'
-        if self.gps is None:
+        try:
+            _, device = args
+            if self.gps is not None:
+                del(self.gps)
             self.gps = GpsInterface(self, device)
-        # TODO else
+        except ValueError:
+            pass
 
+    @mainthread
     def port_selected(self, button, **kwargs):
         self.busy_indefinite()
         self.gps.set_port(button=button, **kwargs)
@@ -108,6 +114,7 @@ class KeaIgcDownloader(ScreenManager, GuiColor):
             self.busy.bind(on_complete=lambda *_: animation.stop(header, rect, gui=self))
             self.busy.start(rect)
 
+    @mainthread
     def busy_progress(self, progress):
         header = self.current_screen.ids.header
         width = header.width * progress
@@ -121,6 +128,7 @@ class KeaIgcDownloader(ScreenManager, GuiColor):
         if progress >= 1.0:
             self.busy = None
 
+    @mainthread
     def done(self):
         if not self.gps.joblist.empty():
             return
@@ -241,6 +249,10 @@ class GpsInterface(Thread):
             func, kwargs = joblist.get()
             try:
                 func(self, **kwargs)
+            except SerialException:
+                # presumably device has been disconnected
+                self.gui.show_message("Connection Error. Please make sure your USB cable is connected securely.")
+                self.gui.device_selected()
             except Exception as e:
                 print(e)
 

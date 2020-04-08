@@ -221,11 +221,15 @@ class FlightListScreen(Screen):
         Window.bind(on_dropfile=self._on_file_drop)
         self.active_download_list = []
         self._last_press = [0, None]
+        self._clear_cb_set = False
 
     def on_enter(self, **kwargs):
         super(FlightListScreen, self).on_pre_enter(**kwargs)
         self.list_flights()
         self.fill_meta()
+        if not self._clear_cb_set:
+            self.manager.bind(current_screen=lambda _, s: self.clear(screen=s))
+            self._clear_cb_set = True
 
     def list_flights(self):
         self.ids.list_bl.clear_widgets()
@@ -354,6 +358,13 @@ class FlightListScreen(Screen):
             self.manager.gps.set_glider_overwrite(overwrite=self.ids.glider_name.text)
         else:
             self.manager.gps.set_glider_overwrite(overwrite=False)
+
+    def clear(self, screen=None):
+        if screen is not self:
+            print('CLEAR!')
+            self.download_list = []
+            self.active_download_list = []
+            self.ids.list_bl.clear_widgets()
 
     def _on_file_drop(self, window, file_path):
         path = file_path if os.path.isdir(file_path) else os.path.dirname(file_path)

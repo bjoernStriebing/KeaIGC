@@ -253,7 +253,12 @@ class GpsDeviceBase(object):
             self.progress = 1.0
             logger.debug('{} receive mode is {} but no response expected'.format(self.__class__.__name__, self.mode))
         cmd_str += '\r\n'
-        self.io.write(cmd_str.encode())
+        try:
+            self.io.write(cmd_str.encode())
+        except Exception:
+            self.io = None
+            self.progress = 1
+            raise
 
     def read(self, **kwargs):
         """
@@ -264,12 +269,17 @@ class GpsDeviceBase(object):
         response. It can also be forced with kwargs.
         """
         self.mode = kwargs.pop('mode', self.mode)
-        if self.mode == 'NMEA':
-            response = self._read_nmea()
-        elif self.mode == 'BIN':
-            progress_done_count = kwargs.pop('progress_done_count', None)
-            header_only = kwargs.pop('header_only', None)
-            response = self._read_bin(progress_done_count=progress_done_count, header_only=header_only)
+        try:
+            if self.mode == 'NMEA':
+                response = self._read_nmea()
+            elif self.mode == 'BIN':
+                progress_done_count = kwargs.pop('progress_done_count', None)
+                header_only = kwargs.pop('header_only', None)
+                response = self._read_bin(progress_done_count=progress_done_count, header_only=header_only)
+        except Exception:
+            self.io = None
+            self.progress = 1
+            raise
         logger.debug('{} NMEA response: {}'.format(self.__class__.__name__, response))
         return response
 
