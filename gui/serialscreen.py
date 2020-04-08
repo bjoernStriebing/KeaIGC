@@ -60,19 +60,20 @@ class SerialScreen(Screen):
         self.list_serial_ports()
 
     def list_serial_ports(self, reschedule=True):
-        # FIXME: should use better serial enumerations
-        ports = glob('/dev/tty.*')
+        ports = list(map(lambda p: {'path': p, 'short': p.split('.')[1]},
+                         glob('/dev/tty.*')))
         # add missing ports
         for port in ports:
-            port_name = os.path.basename(port)
-            if port_name in [b.text for b in self.ids.list_bl.children]:
+            if not port['short'].startswith('usbmodem'):
                 continue
-            b = GuiButton(text=port_name)
-            b.bind(on_release=partial(self.manager.port_selected, port=port))
+            if port['short'] in [b.text for b in self.ids.list_bl.children]:
+                continue
+            b = GuiButton(text=port['short'])
+            b.bind(on_release=partial(self.manager.port_selected, port=port['path']))
             self.ids.list_bl.add_widget(b)
         # throw out old ones
         for button in self.ids.list_bl.children:
-            if button.text not in map(os.path.basename, ports):
+            if button.text not in map(lambda p: p['short'], ports):
                 self.ids.list_bl.remove_widget(button)
         # do it all again soon
         if reschedule and self.manager.current_screen == self:
