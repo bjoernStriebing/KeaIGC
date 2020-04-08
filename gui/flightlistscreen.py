@@ -1,9 +1,7 @@
 import os
-# import pytz
 import time
 import queue
 from datetime import datetime
-# from tzlocal import get_localzone
 from kivy.lang import Builder
 from kivy.clock import Clock, mainthread
 from kivy.core.window import Window
@@ -299,17 +297,16 @@ class FlightListScreen(Screen):
             map.zoom = 13
 
     def update_selected(self, button, selected):
+        if button in self.active_download_list:
+            return
         if selected:
-            if button in self.active_download_list:
-                return
-            self.download_list.append(button)
+            if button not in self.download_list:
+                self.download_list.append(button)
         else:
             try:
                 self.download_list.remove(button)
             except ValueError:
                 pass
-        if self.download_list is None:
-            self.download_list = []
 
     def download(self):
         output_dir = os.path.expanduser(self.ids.export_path.text)
@@ -322,15 +319,19 @@ class FlightListScreen(Screen):
             filename = '{}.igc'.format(timestamp.strftime('%a %d-%b-%Y %H-%M'))
             output_file = os.path.join(output_dir, filename)
             self.manager.download_flight(button.data['num'], output_file)
-            self.active_download_list.append(button)
+            if button not in self.download_list:
+                self.active_download_list.append(button)
 
     def unselect_flight(self, flight):
         for button in self.download_list:
             if button.data['num'] == flight:
-                self.active_download_list.remove(button)
+                self.download_list.remove(button)
                 button.selected = False
-        if self.active_download_list is None:
-            self.active_download_list = []
+                break
+        try:
+            self.active_download_list.remove(button)
+        except ValueError:
+            pass
 
     def select_one(self, button):
         now = time.time()
@@ -339,7 +340,7 @@ class FlightListScreen(Screen):
                 b.selected = False
             # actually don't select the button, it will happen on_release
             # button.selected = True
-            self.download_list = []
+            self.download_list = self.active_download_list
         self._last_press = [now, button]
 
     def pilot_overwrite(self, selected):
@@ -358,6 +359,5 @@ class FlightListScreen(Screen):
         path = file_path if os.path.isdir(file_path) else os.path.dirname(file_path)
         path = path.decode()
         home_path = os.path.expanduser('~')
-        print(type(home_path), home_path, type(path), path)
         path = path.replace(home_path, '~')
         self.ids.export_path.text = path

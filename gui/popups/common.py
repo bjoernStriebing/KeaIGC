@@ -9,6 +9,7 @@ from kivy.graphics.opengl import glReadPixels, GL_RGB, GL_UNSIGNED_BYTE
 from kivy.properties import ListProperty, StringProperty, BooleanProperty, ObjectProperty, OptionProperty
 from kivy.uix.popup import PopupException
 from kivy.uix.modalview import ModalView
+from kivy.uix.widget import WidgetException
 from kivy.metrics import *
 
 from ..common import GuiColor
