@@ -47,7 +47,8 @@ if __name__ == '__main__':
         from gui.keaigcapp import KeaIgcApp
         from packaging.autoupdate import KeaIgcUpdate
         app = KeaIgcApp(title='Kea IGC Forager')
-        autoupdate = KeaIgcUpdate(app)
+        if not args.dev:
+            autoupdate = KeaIgcUpdate(app)
         app.run()
 
     else:
