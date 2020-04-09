@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 PACKAGING_DIR="$(dirname $0)"
-PYTHONPATH=venv/lib/python2.7/site-packages
+PYTHONLIB=$(dirname $(which python))/../lib
+PYTHONPATH=${PYTHONLIB}/$(ls $PYTHONLIB)/site-packages
+
 SHAREDOBJ=false
 DMGIMAGE=false
 for i in "$@"; do
