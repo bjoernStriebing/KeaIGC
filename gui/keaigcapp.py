@@ -23,8 +23,10 @@ from .popups.confirm import ConfirmPopup
 from . import animation
 from .common import GuiColor
 
-
+CONFIG_PATH = os.path.expanduser('~/Library/KeaIgc/settings.ini')
+Config.read(CONFIG_PATH)
 Config.set('kivy', 'exit_on_escape', '0')
+Config.setdefaults('user', {'auto_detect_ports': None})
 
 Builder.load_string("""
 <RootWidget>:
@@ -84,11 +86,6 @@ class KeaIgcDownloader(ScreenManager, GuiColor):
             self.gps = GpsInterface(self, device)
         except ValueError:
             pass
-
-    @mainthread
-    def port_selected(self, button, **kwargs):
-        self.busy_indefinite()
-        self.gps.set_port(button=button, **kwargs)
 
     def download_flight_header(self, flight):
         self.gps.download_flight_header(flight=flight)
@@ -173,7 +170,16 @@ class KeaIgcApp(App):
         self.icon = 'gui/img/app_icon.png'
         self.root_widget = RootWidget()
         self.gui = self.root_widget.main_screen
+        Window.bind(on_request_close=self.on_request_close)
         return self.root_widget
+
+    def on_request_close(self, *args):
+        try:
+            if not os.path.isdir(os.path.dirname(CONFIG_PATH)):
+                os.makedirs(os.path.dirname(CONFIG_PATH))
+            Config.write()
+        except Exception:
+            pass
 
 
 class GpsInterface(Thread):
@@ -183,7 +189,7 @@ class GpsInterface(Thread):
         self.results = queue.Queue()
         self.gui = gui
         super(GpsInterface, self).__init__(target=self._target_func,
-                                           args=(device, self.joblist), **kwargs)
+                                           args=(device, ), **kwargs)
         self.daemon = True
         self.polling = None
         self.start()
@@ -194,19 +200,33 @@ class GpsInterface(Thread):
         return wrapper
 
     @_threaded
-    def set_port(self, button, port):
+    def set_port(self, port, button):
         try:
-            self.gps.io = port
-            id = self.gps.get_id()
-        except (SerialException, AttributeError, ValueError):
-            button.disabled = True
-            self.gui.show_message('Serial port "{}" does not match GPS device {}'.format(
-                port, self.gps.__class__.GUI_NAME))
-            raise
+            self.gps.io = port['path']
+        except (SerialException, AttributeError, ValueError) as e:
+            if button is None:
+                # port not valid on automatic scanning
+                self.results.put((False, port))
+            else:
+                button.disabled = True
+                self.gui.show_message('Serial port "{}" does not match GPS device {}'.format(
+                    port['path'], self.gps.__class__.GUI_NAME))
             return
+        else:
+            if button is None:
+                # success on automatic port scanning
+                self.results.put((True, port))
+                self.drop_jobs()
         finally:
             self.gui.done()
         self.gui.show_flights()
+
+    def drop_jobs(self):
+        while True:
+            try:
+                self.joblist.get_nowait()
+            except queue.Empty:
+                break
 
     @_threaded
     def get_list(self):
@@ -243,10 +263,10 @@ class GpsInterface(Thread):
     def set_glider_overwrite(self, overwrite):
         self.gps.glider_overwrite = overwrite
 
-    def _target_func(self, device, joblist):
+    def _target_func(self, device):
         self.gps = device.get_class(device)(port=None)
         while True:
-            func, kwargs = joblist.get()
+            func, kwargs = self.joblist.get()
             try:
                 func(self, **kwargs)
             except SerialException:

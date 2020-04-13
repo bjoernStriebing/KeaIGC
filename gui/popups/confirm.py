@@ -28,7 +28,7 @@ Builder.load_string("""
             spacing: dp(7)
             GuiButton:
                 text: 'No'
-                on_release: root.dismiss()
+                on_release: root.cancel()
             GuiButton:
                 text: 'OK'
                 on_release: root.carry_on()
@@ -40,6 +40,7 @@ class ConfirmPopup(ThemePopup):
     caller = ObjectProperty(None)
     auto_dismiss = BooleanProperty(False)
     ok_callback = ObjectProperty(None)
+    cancel_callback = ObjectProperty(None)
 
     def __init__(self, message, **kwargs):
         self.message = message
@@ -49,6 +50,14 @@ class ConfirmPopup(ThemePopup):
     def carry_on(self):
         try:
             self.ok_callback()
+        except TypeError:
+            pass
+        finally:
+            self.dismiss()
+
+    def cancel(self):
+        try:
+            self.cancel_callback()
         except TypeError:
             pass
         finally:

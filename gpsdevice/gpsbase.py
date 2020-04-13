@@ -115,7 +115,7 @@ class GpsDeviceBase(object):
 
     def __init__(self, port, **kwargs):
         """Initialise GPS device base class via serial port."""
-        self.io = port
+        self._io = None
         self._manufacturer = None
         self._model = None
         self._serial = None
@@ -124,6 +124,7 @@ class GpsDeviceBase(object):
         self._pilot_name = None
         self._pilot_overwrite = False
         self._glider_overwrite = False
+        self.io = port
 
     @property
     def io(self):
@@ -133,15 +134,17 @@ class GpsDeviceBase(object):
     def io(self, port):
         logger.info('GPS decvice on port {}'.format(port))
         try:
-            if port == self._io.port:
-                self._io.close()
+            self._io.close()
         except AttributeError:
             pass
-        try:
-            self._io = serial.Serial(port=port, baudrate=self.baudrate, timeout=.5)
-            self.flush()
-        except SerialException:
-            return
+        if port is None:
+            self._io = None
+        else:
+            try:
+                self._io = serial.Serial(port=port, baudrate=self.baudrate, timeout=.5)
+                self.flush()
+            except SerialException:
+                pass
         logger.debug('GPS device interface {}'.format(self._io))
 
     @property
@@ -320,7 +323,7 @@ class GpsDeviceBase(object):
         if self.manufacturer not in self.MANUFACTURER_NAMES:
             raise ValueError('Manufacturer "{}" does not match {} GPS device.'.format(
                 self.manufacturer, self.GUI_NAME))
-        if self.model not in self.MODEL_NAMES:
+        if self.model not in self.MODEL_NAMES or self.MODEL_NAMES == 'ANY':
             raise ValueError('Model {} does not match {} GPS device.'.format(
                 self.model, self.GUI_NAME))
 

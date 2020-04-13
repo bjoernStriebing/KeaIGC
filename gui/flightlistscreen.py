@@ -3,6 +3,7 @@ import time
 import queue
 from datetime import datetime
 from kivy.lang import Builder
+from kivy.config import Config
 from kivy.clock import Clock, mainthread
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
@@ -259,7 +260,14 @@ class FlightListScreen(Screen):
         self.ids.list_bl.add_widget(button)
 
     def go_back(self, *largs):
-        self.manager.current = 'ports'
+        try:
+            auto_detect_ports = Config.getboolean('user', 'auto_detect_ports')
+        except ValueError:
+            auto_detect_ports = False
+        if auto_detect_ports:
+            self.manager.current = 'devices'
+        else:
+            self.manager.current = 'ports'
 
     @mainthread
     def show_map(self, flight_num, flight_brief_header):
@@ -361,7 +369,6 @@ class FlightListScreen(Screen):
 
     def clear(self, screen=None):
         if screen is not self:
-            print('CLEAR!')
             self.download_list = []
             self.active_download_list = []
             self.ids.list_bl.clear_widgets()
