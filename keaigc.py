@@ -44,6 +44,7 @@ if __name__ == '__main__':
 
     if not args.cmd:
         """Run the GUI app"""
+        os.environ['KIVY_HOME'] = os.path.join('~', 'Library', 'KeaIgc')
         from gui.keaigcapp import KeaIgcApp
         from packaging.autoupdate import KeaIgcUpdate
         app = KeaIgcApp(title='Kea IGC Forager')

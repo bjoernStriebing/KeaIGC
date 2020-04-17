@@ -10,6 +10,7 @@ from kivy.properties import ListProperty, StringProperty, BooleanProperty, Objec
 from kivy.uix.popup import PopupException
 from kivy.uix.modalview import ModalView
 from kivy.uix.widget import WidgetException
+from kivy.uix.gridlayout import GridLayout
 from kivy.metrics import *
 
 from ..common import GuiColor
@@ -42,7 +43,7 @@ Builder.load_string("""
         cols: 1
         pos: root.pos
         size: root.size
-        spacing: dp(7)
+        spacing: dp(5)
         padding: dp(12)
 
         ScreenHeader:

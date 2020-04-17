@@ -17,14 +17,13 @@ from igc import save as igc_save
 from .gpsclassscreen import GpsClassScreen
 from .serialscreen import SerialScreen
 from .flightlistscreen import FlightListScreen
+from .settingsscreen import SettingsScreen
 from .popups.message import MessagePopup
 from .popups.confirm import ConfirmPopup
 
 from . import animation
-from .common import GuiColor
+from .common import GuiColor, GuiImgButton
 
-CONFIG_PATH = os.path.expanduser('~/Library/KeaIgc/settings.ini')
-Config.read(CONFIG_PATH)
 Config.set('kivy', 'exit_on_escape', '0')
 Config.setdefaults('user', {'auto_detect_ports': None})
 
@@ -37,6 +36,14 @@ Builder.load_string("""
         id: main_screen
         pos: 0, 0
         size_hint: 1, 1
+
+    GuiImgButton:
+        pos: root.width - self.width - dp(12), root.height - self.height - dp(12)
+        size: dp(26), dp(26)
+        size_hint: None, None
+        opacity: .12
+        on_release: root.show_settings()
+        source: 'gui/img/settings.png'
 
     Image:
         id: blur_effect
@@ -60,6 +67,9 @@ class RootWidget(RelativeLayout):
         if parent is not None:
             self.remove_widget(self.blur_effect)  # remove effect for performace
 
+    def show_settings(self):
+        self.ids.main_screen.current = 'settings'
+
 
 class KeaIgcDownloader(ScreenManager, GuiColor):
 
@@ -67,12 +77,15 @@ class KeaIgcDownloader(ScreenManager, GuiColor):
 
     def __init__(self, **kwargs):
         super(KeaIgcDownloader, self).__init__(**kwargs)
+        self.last_screen = None
         self.device_screen = GpsClassScreen(name='devices')
         self.serial_screen = SerialScreen(name='ports')
         self.flightlist_screen = FlightListScreen(name='flightlist')
+        self.settings_screen = SettingsScreen(name='settings')
         self.add_widget(self.device_screen)
         self.add_widget(self.serial_screen)
         self.add_widget(self.flightlist_screen)
+        self.add_widget(self.settings_screen)
         self.current = 'devices'
         self.gps = None
 
@@ -86,6 +99,11 @@ class KeaIgcDownloader(ScreenManager, GuiColor):
             self.gps = GpsInterface(self, device)
         except ValueError:
             pass
+
+    def on_current(self, instance, value):
+        if self.last_screen != self.current_screen:
+            self.last_screen = self.current_screen
+        super(KeaIgcDownloader, self).on_current(instance, value)
 
     def download_flight_header(self, flight):
         self.gps.download_flight_header(flight=flight)
@@ -175,8 +193,6 @@ class KeaIgcApp(App):
 
     def on_request_close(self, *args):
         try:
-            if not os.path.isdir(os.path.dirname(CONFIG_PATH)):
-                os.makedirs(os.path.dirname(CONFIG_PATH))
             Config.write()
         except Exception:
             pass

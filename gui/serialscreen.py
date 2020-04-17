@@ -104,7 +104,8 @@ class SerialScreen(Screen):
             if enable_popup:
                 MessagePopup("No devices found.\n\nPlease make sure you'r GPS device is turned on and connected.")
             self.manager.done()
-            Clock.schedule_once(lambda dt: self.detect_port(), 1)
+            if self.manager.current_screen == self:
+                Clock.schedule_once(lambda dt: self.detect_port(), 1)
             return
         else:
             t = Thread(target=self._check_auto_port_results,

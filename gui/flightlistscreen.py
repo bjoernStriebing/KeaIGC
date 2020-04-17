@@ -8,13 +8,13 @@ from kivy.clock import Clock, mainthread
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import ListProperty, ObjectProperty
 from kivy.metrics import *
 
-from .common import GuiLabel, GuiButton, GuiSelsectButton, GuiTextInput
+from .common import GuiLabel, GuiButton, GuiSelsectButton, GuiTextInput, GuiGridLayout
+from .settingsscreen import SettingsScreen
 from .contrib.gardenmapview import MapView, MapMarkerPopup
 from . import animation
 from library import utc_to_local
@@ -226,6 +226,8 @@ class FlightListScreen(Screen):
 
     def on_enter(self, **kwargs):
         super(FlightListScreen, self).on_pre_enter(**kwargs)
+        if isinstance(self.manager.last_screen, SettingsScreen):
+            return
         self.list_flights()
         self.fill_meta()
         if not self._clear_cb_set:
@@ -368,7 +370,7 @@ class FlightListScreen(Screen):
             self.manager.gps.set_glider_overwrite(overwrite=False)
 
     def clear(self, screen=None):
-        if screen is not self:
+        if screen is not self and not isinstance(screen, SettingsScreen):
             self.download_list = []
             self.active_download_list = []
             self.ids.list_bl.clear_widgets()

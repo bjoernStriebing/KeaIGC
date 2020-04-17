@@ -1,11 +1,10 @@
 from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.metrics import *
 
-from .common import GuiLabel, GuiButton
+from .common import GuiLabel, GuiButton, GuiGridLayout
 import gpsdevice
 
 

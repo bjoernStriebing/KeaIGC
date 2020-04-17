@@ -3,7 +3,11 @@ from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.image import Image
 from kivy.properties import BooleanProperty, NumericProperty, ObjectProperty
+from kivy.graphics import Rectangle, Color
 from kivy.metrics import *
 
 Builder.load_string("""
@@ -22,7 +26,6 @@ Builder.load_string("""
 
 class GuiColor(Widget):
     pass
-
 
 Builder.load_string("""
 <GuiButton>:
@@ -58,6 +61,20 @@ class GuiSelsectButton(GuiButton):
             pass
 
 
+class GuiImgButton(ButtonBehavior, Image):
+
+    def on_press(self):
+        with self.canvas.before:
+            Color(245./255, 222./255, 84./255, 1, mode='rgba')
+            Rectangle(pos=self.pos, size=self.size)
+        self._opacity = self.opacity
+        self.opacity = 1
+
+    def on_release(self):
+        self.opacity = self._opacity
+        self.canvas.before.clear()
+
+
 Builder.load_string("""
 <GuiLabel>:
     size_hint: 1, None
@@ -91,11 +108,15 @@ class GuiTextInput(TextInput):
 
 
 Builder.load_string("""
-<GuiGridLayout@GridLayout>:
+<GuiGridLayout>:
     cols: 1
     spacing: dp(5)
 
 """)
+
+
+class GuiGridLayout(GridLayout):
+    pass
 
 
 Builder.load_string("""
