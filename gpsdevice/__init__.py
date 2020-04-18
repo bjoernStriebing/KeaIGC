@@ -14,6 +14,7 @@ def import_lib(developer=False):
 
     frozen = getattr(sys, 'frozen', False)
     if frozen or developer is False:
+        print("Imported GPS devices from libraries, will attempt signing IGCs")
         from .lib import gpsmisc
         from .lib import gpsbase
         from .lib import gpsflymaster
