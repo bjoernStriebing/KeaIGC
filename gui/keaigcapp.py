@@ -43,9 +43,10 @@ Builder.load_string("""
         pos: root.width - self.width - dp(12), root.height - self.height - dp(12)
         size: dp(26), dp(26)
         size_hint: None, None
-        opacity: .12
+        opacity: .12 if not main_screen.busy else 1
+        anim_delay: 1/30
         on_release: root.show_settings()
-        source: 'gui/img/settings.png'
+        source: 'gui/img/settings.png' if not main_screen.busy else 'gui/img/cloud_load.gif'
 
     Image:
         id: blur_effect
