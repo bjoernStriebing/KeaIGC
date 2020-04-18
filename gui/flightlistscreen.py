@@ -11,9 +11,8 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import ListProperty, ObjectProperty
-from kivy.metrics import *
 
-from .common import GuiLabel, GuiButton, GuiSelsectButton, GuiTextInput, GuiGridLayout
+from .common import GuiLabel, GuiButton, GuiSelsectButton, GuiTextInput, GuiGridLayout, GuiMetric
 from .settingsscreen import SettingsScreen
 from .contrib.gardenmapview import MapView, MapMarkerPopup
 from . import animation
@@ -25,8 +24,8 @@ Builder.load_string("""
 <FlightListScreen>:
     BoxLayout:
         orientation: "vertical"
-        padding: dp(12)
-        spacing: dp(7)
+        padding: 12 * root.dp
+        spacing: 7 * root.dp
         ScreenHeader:
             id: header
             text: "Select flights from list below"
@@ -36,27 +35,27 @@ Builder.load_string("""
                 size_hint: 1, 1
                 pos_hint: {'x': 0, 'y': 0}
                 bar_width: 3
-                scroll_distance: dp(20)
-                scroll_wheel_distance: dp(20)
+                scroll_distance: 20 * root.dp
+                scroll_wheel_distance: 20 * root.dp
                 smooth_scroll_end: 8
                 GuiGridLayout:
                     id: list_bl
                     size_hint_y: None
                     height: self.minimum_height
-                    padding: 0, 0, dp(3.5), 0
+                    padding: 0, 0, 3.5 * self.dp, 0
                     update_selected: root.update_selected
             BoxLayout:
                 id: mapbox
                 size_hint: .5, 1
                 pos_hint: {'x': 1.2, 'y': 0}
-                padding: dp(3.5), 0, 0, 0
-                spacing: dp(7)
+                padding: 3.5 * root.dp, 0, 0, 0
+                spacing: 7 * root.dp
                 orientation: 'vertical'
                 MapView:
                     id: map
                     background_color: 1, 1, 1, 1
                 BoxLayout:
-                    spacing: dp(7)
+                    spacing: 7 * root.dp
                     orientation: 'vertical'
                     height: self.minimum_height
                     size_hint_y: None
@@ -65,18 +64,18 @@ Builder.load_string("""
                         orientation: 'vertical'
                         height: self.minimum_height
                         size_hint_y: None
-                        spacing: dp(3)
+                        spacing: 3 * root.dp
                         GuiLabel:
-                            height: dp(20)
+                            height: 20 * self.dp
                             text: "Takeoff Altitude"
                             canvas.before:
                                 Color:
                                     rgba: 245./255, 222./255, 84./255, 1
                                 Rectangle:
-                                    size: self.width, dp(1)
-                                    pos: self.x, self.y + dp(1)
+                                    size: self.width, 1 * self.dp
+                                    pos: self.x, self.y + 1 * self.dp
                         BoxLayout:
-                            spacing: dp(7)
+                            spacing: 7 * root.dp
                             orientation: 'vertical'
                             height: self.minimum_height
                             size_hint_y: None
@@ -84,86 +83,86 @@ Builder.load_string("""
                                 height: self.minimum_height
                                 size_hint_y: None
                                 GuiLabel:
-                                    height: dp(20)
+                                    height: 20 * self.dp
                                     text: "Barometer"
                                 GuiLabel:
-                                    height: dp(20)
+                                    height: 20 * self.dp
                                     text: "GPS"
                                 GuiLabel:
-                                    height: dp(20)
+                                    height: 20 * self.dp
                                     text: "Offset"
                             BoxLayout:
                                 height: self.minimum_height
                                 size_hint_y: None
                                 GuiLabel:
                                     id: baro_alt
-                                    height: dp(20)
+                                    height: 20 * self.dp
                                 GuiLabel:
                                     id: gps_alt
-                                    height: dp(20)
+                                    height: 20 * self.dp
                                 GuiLabel:
                                     id: offset_alt
-                                    height: dp(20)
+                                    height: 20 * self.dp
 
                     BoxLayout:
                         orientation: 'vertical'
                         height: self.minimum_height
                         size_hint_y: None
-                        spacing: dp(3)
+                        spacing: 3 * root.dp
                         GuiLabel:
-                            height: dp(20)
+                            height: 20 * self.dp
                             text: "Metadata"
                             canvas.before:
                                 Color:
                                     rgba: 245./255, 222./255, 84./255, 1
                                 Rectangle:
-                                    size: self.width, dp(1)
-                                    pos: self.x, self.y + dp(1)
+                                    size: self.width, 1 * self.dp
+                                    pos: self.x, self.y + 1 * self.dp
                         BoxLayout:
-                            spacing: dp(7)
+                            spacing: 7 * root.dp
                             orientation: 'vertical'
                             height: self.minimum_height
                             size_hint_y: None
                             BoxLayout:
                                 height: self.minimum_height
                                 size_hint_y: None
-                                spacing: dp(7)
+                                spacing: 7 * root.dp
                                 GuiLabel:
                                     text: "Pilot"
-                                    height: dp(24)
+                                    height: 24 * self.dp
                                     halign: 'left'
-                                    size: dp(100), dp(24)
+                                    size: 100 * self.dp, 24 * self.dp
                                     size_hint: None, None
                                 GuiTextInput:
                                     id: pilot_name
-                                    height: dp(24)
+                                    height: 24 * self.dp
                                     on_focus:
                                         if self.focus: replace_pilot.selected = True
                                 GuiSelsectButton:
                                     id: replace_pilot
                                     text: "Replace"
-                                    size: dp(62), dp(24)
+                                    size: 62 * self.dp, 24 * self.dp
                                     size_hint: None, None
                                     on_selected: root.pilot_overwrite(self.selected)
                             BoxLayout:
                                 height: self.minimum_height
                                 size_hint_y: None
-                                spacing: dp(7)
+                                spacing: 7 * root.dp
                                 GuiLabel:
                                     text: "Glider"
-                                    height: dp(24)
+                                    height: 24 * self.dp
                                     halign: 'left'
-                                    size: dp(100), dp(24)
+                                    size: 100 * self.dp, 24 * self.dp
                                     size_hint: None, None
                                 GuiTextInput:
                                     id: glider_name
-                                    height: dp(24)
+                                    height: 24 * self.dp
                                     on_focus:
                                         if self.focus: replace_glider.selected = True
                                 GuiSelsectButton:
                                     id: replace_glider
                                     text: "Replace"
-                                    size: dp(62), dp(24)
+                                    size: 62 * self.dp, 24 * self.dp
                                     size_hint: None, None
                                     on_selected: root.glider_overwrite(self.selected)
 
@@ -171,28 +170,28 @@ Builder.load_string("""
                         orientation: 'vertical'
                         height: self.minimum_height
                         size_hint_y: None
-                        spacing: dp(3)
+                        spacing: 3 * root.dp
                         GuiLabel:
-                            height: dp(20)
+                            height: 20 * self.dp
                             text: "Export"
                             canvas.before:
                                 Color:
                                     rgba: 245./255, 222./255, 84./255, 1
                                 Rectangle:
-                                    size: self.width, dp(1)
-                                    pos: self.x, self.y + dp(1)
+                                    size: self.width, 1 * self.dp
+                                    pos: self.x, self.y + 1 * self.dp
                         BoxLayout:
                             height: self.minimum_height
                             size_hint_y: None
-                            spacing: dp(7)
+                            spacing: 7 * root.dp
                             GuiLabel:
-                                size: dp(100), dp(60)
+                                size: 100 * self.dp, 60 * self.dp
                                 size_hint: None, None
                                 text: "Export Path"
                                 halign: 'left'
                             GuiButton:
                                 id: export_path
-                                height: dp(60)
+                                height: 60 * self.dp
                                 text: '~/Desktop'
                                 on_press:
                                     self.text = '~/Desktop'
@@ -200,7 +199,7 @@ Builder.load_string("""
             id: buttom
             size_hint: 1, None
             height: self.minimum_height
-            spacing: dp(7)
+            spacing: 7 * root.dp
             GuiButton:
                 id: back_button
                 text: "Back"
@@ -213,7 +212,7 @@ Builder.load_string("""
 """)
 
 
-class FlightListScreen(Screen):
+class FlightListScreen(Screen, GuiMetric):
     map_marker = ObjectProperty(None)
     download_list = ListProperty([])
 
@@ -319,7 +318,7 @@ class FlightListScreen(Screen):
         if marker is not None:
             map.center_on(marker.lat,
                           marker.lon)
-            map.zoom = 13
+            map.zoom = 14
 
     def update_selected(self, button, selected):
         if button in self.active_download_list:

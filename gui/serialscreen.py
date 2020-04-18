@@ -8,9 +8,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
-from kivy.metrics import *
 
-from .common import GuiLabel, GuiButton
+from .common import GuiLabel, GuiButton, GuiMetric
 from .popups.confirm import ConfirmPopup
 from .popups.message import MessagePopup
 import gpsdevice
@@ -28,15 +27,15 @@ Builder.load_string("""
 <SerialScreen>:
     BoxLayout:
         orientation: "vertical"
-        padding: dp(12)
-        spacing: dp(7)
+        padding: 12 * root.dp
+        spacing: 7 * root.dp
         ScreenHeader:
             id: header
             text: "Please select the Port your GPS device is connected to"
         ScrollView:
             bar_width: 3
-            scroll_distance: dp(20)
-            scroll_wheel_distance: dp(20)
+            scroll_distance: 20 * root.dp
+            scroll_wheel_distance: 20 * root.dp
             smooth_scroll_end: 8
             GuiGridLayout:
                 id: list_bl
@@ -46,7 +45,7 @@ Builder.load_string("""
             id: buttom
             size_hint: 1, None
             height: self.minimum_height
-            spacing: dp(7)
+            spacing: 7 * root.dp
             GuiButton:
                 text: "Back"
                 on_release: Clock.schedule_once(lambda dt: root.go_back())
@@ -56,7 +55,7 @@ Builder.load_string("""
 """)
 
 
-class SerialScreen(Screen):
+class SerialScreen(Screen, GuiMetric):
 
     def on_enter(self, **kwargs):
         super(SerialScreen, self).on_pre_enter(**kwargs)
@@ -150,4 +149,4 @@ class SerialScreen(Screen):
 
     @mainthread
     def _message_no_valid_port(self):
-        MessagePopup("None of the available ports matches your device{}.\n\nPlease make sure you'r GPS device is turned on and connected.".format(self.manager.gps.GUI_NAME))
+        MessagePopup("None of the available ports matches your device {}.\n\nPlease make sure you'r GPS device is turned on and connected.".format(self.manager.gps.gps.GUI_NAME))

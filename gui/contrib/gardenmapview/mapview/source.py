@@ -2,13 +2,13 @@
 
 __all__ = ["MapSource"]
 
-from kivy.metrics import dp
 from math import cos, ceil, log, tan, pi, atan, exp
 from . import MIN_LONGITUDE, MAX_LONGITUDE, MIN_LATITUDE, MAX_LATITUDE, \
     CACHE_DIR
 from .downloader import Downloader
 from .utils import clamp
 import hashlib
+from ....metrics import metric
 
 
 class MapSource(object):
@@ -63,7 +63,7 @@ class MapSource(object):
         self.attribution_short = attribution_short
         self.subdomains = subdomains
         self.cache_fmt = "{cache_key}_{zoom}_{tile_x}_{tile_y}.{image_ext}"
-        self.dp_tile_size = min(dp(self.tile_size), self.tile_size * 2)
+        self.dp_tile_size = min(self.tile_size * metric.dp, self.tile_size * 2)
         self.default_lat = self.default_lon = self.default_zoom = None
         self.bounds = None
         self.cache_dir = kwargs.get('cache_dir', CACHE_DIR)

@@ -4,12 +4,11 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import Screen
 from kivy.uix.settings import Settings, SettingsPanel, SettingsWithNoMenu, InterfaceWithNoMenu
-from kivy.uix.settings import SettingItem, SettingBoolean
+from kivy.uix.settings import SettingItem, SettingBoolean, SettingTitle
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.config import Config, ConfigParser
-from kivy.metrics import *
 
-from .common import GuiLabel, GuiButton, GuiGridLayout
+from .common import GuiLabel, GuiButton, GuiSwitch, GuiGridLayout, GuiMetric
 from .popups.message import MessagePopup
 import gpsdevice
 
@@ -18,8 +17,8 @@ Builder.load_string("""
 <SettingsScreen>:
     BoxLayout:
         orientation: "vertical"
-        padding: dp(12)
-        spacing: dp(12)
+        padding: 12 * root.dp
+        spacing: 12 * root.dp
         ScreenHeader:
             id: header
             text: "Settings"
@@ -35,7 +34,7 @@ Builder.load_string("""
 """)
 
 
-class SettingsScreen(Screen):
+class SettingsScreen(Screen, GuiMetric):
 
     def __init__(self, **kwargs):
         super(SettingsScreen, self).__init__(**kwargs)
@@ -51,6 +50,10 @@ class SettingsScreen(Screen):
                     "desc": "Talk to evry available serial port to find GPS device automatically",
                     "section": "user",
                     "key": "auto_detect_ports"
+                },
+                {
+                    "type": "title",
+                    "title": "IGC Header Overwrite Settings"
                 },
                 {
                     "type": "string",
@@ -100,7 +103,7 @@ class GuiSettings(SettingsWithNoMenu):
         self.register_type('bool', GuiSettingBoolean)
         # self.register_type('numeric', SettingNumeric)
         # self.register_type('options', SettingOptions)
-        # self.register_type('title', SettingTitle)
+        self.register_type('title', GuiSettingTitle)
         # self.register_type('path', SettingPath)
 
     def create_json_panel(self, title, config, filename=None, data=None):
@@ -146,7 +149,7 @@ class GuiSettings(SettingsWithNoMenu):
 
 Builder.load_string("""
 <-GuiSettingsPanel>:
-    spacing: dp(4)
+    spacing: 4 * self.dp
     padding: 0
     size_hint_y: None
     height: self.minimum_height
@@ -154,18 +157,19 @@ Builder.load_string("""
     GuiLabel:
         text: root.title
         valign: "bottom"
-        height: dp(28)
+        height: 28 * self.dp
+        font_size: 15 * self.dp
 
         canvas.before:
             Color:
                 rgb: 1245./255, 222./255, 84./255, 1
             Rectangle:
-                pos: self.x, self.y - 4
-                size: self.width, 1
+                pos: self.x, self.y - 2 * self.dp
+                size: self.width, min(int(.5 * self.dp), 1)
 
 <-GuiSettingItem>:
     size_hint: .25, None
-    height: labellayout.texture_size[1] + dp(10)
+    height: labellayout.texture_size[1] + 10 * self.dp
     content: content
     canvas:
         Color:
@@ -182,15 +186,32 @@ Builder.load_string("""
             id: labellayout
             markup: True
             color: .1, .1, 0.1, 1
-            text: '{0}{2}[size=13sp][color=777777]{1}[/color][/size]'.format(root.title or '', root.desc or '', chr(10))
-            text_size: self.width - dp(16), None
+            text: '{t}{n}[size={s}][color=777777]{d}[/color][/size]'.format(t=root.title or '', d=root.desc or '',s=14 * root.dp, n=chr(10))
+            text_size: self.width - 16 * root.dp, None
+            font_size: 15 * root.dp
 
         BoxLayout:
             id: content
             size_hint_x: .3
 
+
+<GuiSettingTitle>:
+    valign: "bottom"
+    # size_hint: 1, None
+    height: 28 * self.dp
+    # font_size: 15 * self.dp
+    text_size: self.size
+    # color: .1, .1, .1, 1
+
+    canvas.before:
+        Color:
+            rgb: 1245./255, 222./255, 84./255, 1
+        Rectangle:
+            pos: self.x, self.y - 2 * self.dp
+            size: self.width, min(int(.5 * self.dp), 1)
+
 <GuiSettingBoolean>:
-    Switch:
+    GuiSwitch:
         text: 'Boolean'
         pos: root.pos
         active: bool(root.values.index(root.value)) if root.value in root.values else False
@@ -204,15 +225,22 @@ Builder.load_string("""
         # pos: root.pos
         on_text_validate: root._validate(self)
         on_focus: root._validate(self) if not self.focus else None
+
+
 """)
 
 
-class GuiSettingsPanel(SettingsPanel):
+class GuiSettingsPanel(SettingsPanel, GuiMetric):
     pass
 
 
-class GuiSettingItem(SettingItem):
+class GuiSettingItem(SettingItem, GuiMetric):
     pass
+
+
+class GuiSettingTitle(GuiLabel):
+    panel = ObjectProperty(None)
+    title = GuiLabel.text
 
 
 class GuiSettingBoolean(GuiSettingItem, SettingBoolean):

@@ -11,7 +11,6 @@ from kivy.lang.builder import Builder
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.relativelayout import RelativeLayout
-from kivy.metrics import dp
 
 from igc import save as igc_save
 from .gpsclassscreen import GpsClassScreen
@@ -23,6 +22,7 @@ from .popups.confirm import ConfirmPopup
 
 from . import animation
 from .common import GuiColor, GuiImgButton
+from .metrics import update_metrics
 
 Config.set('kivy', 'exit_on_escape', '0')
 Config.setdefaults('user', {'auto_detect_ports': None,
@@ -40,8 +40,8 @@ Builder.load_string("""
         size_hint: 1, 1
 
     GuiImgButton:
-        pos: root.width - self.width - dp(12), root.height - self.height - dp(12)
-        size: dp(26), dp(26)
+        pos: root.width - self.width - 12 * self.dp, root.height - self.height - 12 * self.dp
+        size: 26 * self.dp, 26 * self.dp
         size_hint: None, None
         opacity: .12 if not main_screen.busy else 1
         anim_delay: 1/30
@@ -65,6 +65,7 @@ class RootWidget(RelativeLayout):
     def __init__(self, **kwargs):
         Window.clearcolor = (1, 1, 1, 1)
         super(RootWidget, self).__init__(**kwargs)
+        Window.bind(on_resize=lambda *args: update_metrics())
 
     def on_parent(self, instance, parent):
         if parent is not None:

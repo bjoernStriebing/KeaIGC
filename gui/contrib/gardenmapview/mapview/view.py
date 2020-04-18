@@ -5,7 +5,6 @@ __all__ = ["MapView", "MapMarker", "MapMarkerPopup", "MapLayer",
 
 from os.path import join, dirname
 from kivy.clock import Clock
-from kivy.metrics import dp
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.image import Image
@@ -25,12 +24,14 @@ from .utils import clamp
 from itertools import takewhile
 
 import webbrowser
+from ....common import GuiMetric
+from ....metrics import metric
 
 Builder.load_string("""
 <MapMarker>:
     size_hint: None, None
     source: root.source
-    size: list(map(dp, self.texture_size))
+    size: list(map(lambda s: s * self.dp, self.texture_size))
     allow_stretch: True
 
 <MapView>:
@@ -55,8 +56,8 @@ Builder.load_string("""
     ClickableLabel:
         text: root.map_source.attribution if hasattr(root.map_source, "attribution") else ""
         size_hint: None, None
-        size: self.texture_size[0] + sp(8), self.texture_size[1] + sp(4)
-        font_size: "10sp"
+        size: self.texture_size[0] + 8 * self.dp, self.texture_size[1] + 4 * self.dp
+        font_size: 10 * self.dp
         right: [root.right, self.center][0]
         color: 0, 0, 0, 1
         markup: True
@@ -72,7 +73,7 @@ Builder.load_string("""
     auto_bring_to_front: False
     do_rotation: False
     scale_min: 0.2
-    scale_max: 3.
+    scale_max: 1.5
 
 <MapMarkerPopup>:
     RelativeLayout:
@@ -84,7 +85,7 @@ Builder.load_string("""
 """)
 
 
-class ClickableLabel(Label):
+class ClickableLabel(Label, GuiMetric):
     def on_ref_press(self, *args):
         webbrowser.open(str(args[0]), new=2)
 
@@ -108,7 +109,7 @@ class Tile(Rectangle):
         self.state = "need-animation"
 
 
-class MapMarker(ButtonBehavior, Image):
+class MapMarker(ButtonBehavior, Image, GuiMetric):
     """A marker on a map, that must be used on a :class:`MapMarker`
     """
 
@@ -271,6 +272,26 @@ class MapViewScatter(Scatter):
         # print "collide_point", x, y
         return True
 
+    # def _get_scale(self):
+    #     p1 = Vector(*self.to_parent(0, 0))
+    #     p2 = Vector(*self.to_parent(1, 0))
+    #     scale = p1.distance(p2)
+    #     print(scale)
+    #
+    #     self._scale_p = scale
+    #     return scale
+    #
+
+    def _set_scale(self, scale):
+        rescale = scale * 1.0 / self.scale
+        print('set', rescale)
+        self.apply_transform(Matrix().scale(rescale, rescale, rescale),
+                             post_multiply=True,
+                             anchor=self.to_local(*self.center))
+
+    def on_scale(self, instance, scale):
+        print('on scale', scale)
+
 
 class MapView(Widget):
     """MapView is the widget that control the map displaying, navigation, and
@@ -321,7 +342,7 @@ class MapView(Widget):
 
     delta_x = NumericProperty(0)
     delta_y = NumericProperty(0)
-    background_color = ListProperty([181 / 255., 208 / 255., 208 / 255., 1])
+    background_color = ListProperty([0, 0, 0, 0.12])
     cache_dir = StringProperty(CACHE_DIR)
     _zoom = NumericProperty(0)
     _pause = BooleanProperty(False)
@@ -952,17 +973,19 @@ class MapView(Widget):
         self._tilemap = {}
 
     def tile_map_set(self, tile_x, tile_y, value):
-        key = tile_y * self.map_source.get_col_count(self._zoom) + tile_x
+        key = '{},{},{}'.format(self._zoom, tile_x, tile_y)
         if value:
             self._tilemap[key] = value
         else:
             self._tilemap.pop(key, None)
 
     def tile_in_tile_map(self, tile_x, tile_y):
-        key = tile_y * self.map_source.get_col_count(self._zoom) + tile_x
+        key = '{},{},{}'.format(self._zoom, tile_x, tile_y)
         return key in self._tilemap
 
     def on_size(self, instance, size):
+        ms = self.map_source
+        ms.dp_tile_size = min(ms.tile_size * metric.dp, ms.tile_size * 2)
         for layer in self._layers:
             layer.size = size
         self.center_on(self.lat, self.lon)

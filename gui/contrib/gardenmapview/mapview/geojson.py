@@ -26,10 +26,10 @@ from kivy.graphics import (Canvas, PushMatrix, PopMatrix, MatrixInstruction,
 from kivy.graphics import Mesh, Line, Color
 from kivy.graphics.tesselator import Tesselator, WINDING_ODD, TYPE_POLYGONS
 from kivy.utils import get_color_from_hex
-from kivy.metrics import dp
 from . import CACHE_DIR
 from view import MapLayer
 from downloader import Downloader
+from ....metrics import metric
 
 COLORS = {
     'aliceblue': '#f0f8ff',
@@ -350,7 +350,7 @@ class GeoJsonMapLayer(MapLayer):
 
         elif tp == "LineString":
             stroke = get_color_from_hex(properties.get("stroke", "#ffffff"))
-            stroke_width = dp(properties.get("stroke-width"))
+            stroke_width = properties.get("stroke-width") * metric.dp
             xy = list(self._lonlat_to_xy(geometry["coordinates"]))
             xy = flatten(xy)
             graphics.append(Color(*stroke))

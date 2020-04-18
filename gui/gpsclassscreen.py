@@ -2,9 +2,8 @@ from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import Screen
-from kivy.metrics import *
 
-from .common import GuiLabel, GuiButton, GuiGridLayout
+from .common import GuiLabel, GuiButton, GuiGridLayout, GuiMetric
 import gpsdevice
 
 
@@ -12,15 +11,15 @@ Builder.load_string("""
 <GpsClassScreen>:
     BoxLayout:
         orientation: "vertical"
-        padding: dp(12)
-        spacing: dp(7)
+        padding: 12 * root.dp
+        spacing: 7 * root.dp
         ScreenHeader:
             id: header
             text: "Select your type of GPS device"
         ScrollView:
             bar_width: 3
-            scroll_distance: dp(20)
-            scroll_wheel_distance: dp(20)
+            scroll_distance: 20 * root.dp
+            scroll_wheel_distance: 20 * root.dp
             smooth_scroll_end: 8
             GuiGridLayout:
                 id: list_bl
@@ -36,7 +35,7 @@ Builder.load_string("""
 """)
 
 
-class GpsClassScreen(Screen):
+class GpsClassScreen(Screen, GuiMetric):
 
     def on_pre_enter(self, **kwargs):
         super(GpsClassScreen, self).on_pre_enter(**kwargs)

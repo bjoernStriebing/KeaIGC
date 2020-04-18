@@ -5,7 +5,7 @@ __all__ = ["clamp", "haversine", "get_zoom_for_radius"]
 from math import radians, cos, sin, asin, sqrt, pi
 
 from kivy.core.window import Window
-from kivy.metrics import dp
+from ....metrics import metric
 
 
 def clamp(x, minimum, maximum):
@@ -41,7 +41,7 @@ def get_zoom_for_radius(radius_km, lat=None, tile_size=256.):
     earth_circumference = 2. * pi * 6378137. * cos(lat * pi / 180.)
 
     # Check how many tiles that are currently in view
-    nr_tiles_shown = min(Window.size) / dp(tile_size)
+    nr_tiles_shown = min(Window.size) / tile_size * matric.dp
 
     # Keep zooming in until we find a zoom level where the circle can fit inside the screen
     zoom = 1

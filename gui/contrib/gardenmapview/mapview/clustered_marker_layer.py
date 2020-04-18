@@ -8,15 +8,15 @@ from os.path import dirname, join
 from math import sin, log, pi, atan, exp, floor, sqrt
 from view import MapLayer, MapMarker
 from kivy.lang import Builder
-from kivy.metrics import dp
 from kivy.properties import (ObjectProperty, NumericProperty, StringProperty, ListProperty)
+from ....metrics import metric
 
 
 Builder.load_string("""
 <ClusterMapMarker>:
     size_hint: None, None
     source: root.source
-    size: list(map(dp, self.texture_size))
+    size: self.texture_size[0] * metric.dp, self.texture_size[1] * metric.dp
     allow_stretch: True
 
     Label:
@@ -24,7 +24,7 @@ Builder.load_string("""
         pos: root.pos
         size: root.size
         text: "{}".format(root.num_points)
-        font_size: dp(18)
+        font_size: 18 * metric.dp
 """)
 
 
@@ -408,7 +408,7 @@ class ClusteredMarkerLayer(MapLayer):
     def reposition(self):
         if self.cluster is None:
             self.build_cluster()
-        margin = dp(48)
+        margin = 48 * metric.dp
         mapview = self.parent
         set_marker_position = self.set_marker_position
         bbox = mapview.get_bbox(margin)

@@ -11,9 +11,9 @@ from kivy.uix.popup import PopupException
 from kivy.uix.modalview import ModalView
 from kivy.uix.widget import WidgetException
 from kivy.uix.gridlayout import GridLayout
-from kivy.metrics import *
 
-from ..common import GuiColor
+from ..common import GuiColor, GuiMetric
+from ..metrics import metric
 
 
 @mainthread
@@ -23,7 +23,7 @@ def _blur_popup_bg():
     width, height = Window.size
     screenbuffer = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)
     screenimg = Image.frombytes('RGB', (width, height), screenbuffer)
-    screenblur = screenimg.filter(ImageFilter.GaussianBlur(dp(4)))
+    screenblur = screenimg.filter(ImageFilter.GaussianBlur(4 * metric.dp))
     try:
         if blur_effect.texture.width != width or blur_effect.texture.height != height:
             blur_effect.texture = Texture.create(size=(width, height))
@@ -43,19 +43,19 @@ Builder.load_string("""
         cols: 1
         pos: root.pos
         size: root.size
-        spacing: dp(5)
-        padding: dp(12)
+        spacing: 5 * root.dp
+        padding: 12 * root.dp
 
         ScreenHeader:
             text: root.title
 
         BoxLayout:
             id: container
-            padding: dp(-12)
+            padding: -12 * root.dp
 """)
 
 
-class ThemePopup(ModalView, GuiColor):
+class ThemePopup(ModalView, GuiColor, GuiMetric):
     title = StringProperty('Popup')
     background = StringProperty(os.path.join('gui', 'img', 'popup_bg.png'))
     auto_dismiss = BooleanProperty(False)

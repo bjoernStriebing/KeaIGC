@@ -1,14 +1,25 @@
 from kivy.lang import Builder
+from kivy.event import EventDispatcher
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 from kivy.properties import BooleanProperty, NumericProperty, ObjectProperty
 from kivy.graphics import Rectangle, Color
-from kivy.metrics import *
+from .metrics import metric
+
+
+class GuiMetric(EventDispatcher):
+    dp = NumericProperty(metric.dp)
+
+    def __init__(self, **kwargs):
+        super(GuiMetric, self).__init__(**kwargs)
+        metric.bind(dp=lambda _, dp: self.property('dp').set(self, dp))
+
 
 Builder.load_string("""
 <GuiColor>
@@ -31,14 +42,15 @@ class GuiColor(Widget):
 Builder.load_string("""
 <GuiButton>:
     size_hint: 1, None
-    height: dp(60)
+    height: 60 * self.dp
+    font_size: 15 * self.dp
     background_color: 1, 1, 1, 1
     background_normal: "gui/img/g85.png"
     background_down: "gui/img/highlightColour.png"
 """)
 
 
-class GuiButton(Button, GuiColor):
+class GuiButton(Button, GuiColor, GuiMetric):
     data = ObjectProperty(None)
     pass
 
@@ -62,7 +74,7 @@ class GuiSelsectButton(GuiButton):
             pass
 
 
-class GuiImgButton(ButtonBehavior, Image):
+class GuiImgButton(ButtonBehavior, Image, GuiMetric):
 
     def on_press(self):
         with self.canvas.before:
@@ -79,21 +91,44 @@ class GuiImgButton(ButtonBehavior, Image):
 Builder.load_string("""
 <GuiLabel>:
     size_hint: 1, None
-    height: dp(60)
+    font_size: 15 * self.dp
+    height: 60 * self.dp
     text_size: self.size
     halign: 'center'
     valign: 'middle'
 """)
 
 
-class GuiLabel(Label, GuiColor):
+class GuiLabel(Label, GuiColor, GuiMetric):
+    pass
+
+
+Builder.load_string("""
+<GuiSwitch>:
+    active_norm_pos: max(0., min(1., (int(self.active) + self.touch_distance / (41 * self.dp))))
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Rectangle:
+            source: 'atlas://data/images/defaulttheme/switch-background'
+            size: 83 * self.dp, 32 * self.dp
+            pos: int(self.center_x - 41 * self.dp), int(self.center_y - 16 * self.dp)
+        Rectangle:
+            source: 'atlas://data/images/defaulttheme/switch-button'
+            size: 43 * self.dp, 32 * self.dp
+            pos: int(self.center_x - 41 * self.dp + self.active_norm_pos * 41 * self.dp), int(self.center_y - 16 * self.dp)
+""")
+
+
+class GuiSwitch(Switch, GuiMetric):
     pass
 
 
 Builder.load_string("""
 <GuiTextInput>:
     size_hint: 1, None
-    height: dp(24)
+    height: 24 * self.dp
+    font_size: 15 * self.dp
     multiline: False
     background_normal: "gui/img/g85.png"
     background_active: "gui/img/g85.png"
@@ -104,28 +139,28 @@ Builder.load_string("""
 """)
 
 
-class GuiTextInput(TextInput):
+class GuiTextInput(TextInput, GuiMetric):
     pass
 
 
 Builder.load_string("""
 <GuiGridLayout>:
     cols: 1
-    spacing: dp(5)
+    spacing: 5 * self.dp
 
 """)
 
 
-class GuiGridLayout(GridLayout):
+class GuiGridLayout(GridLayout, GuiMetric):
     pass
 
 
 Builder.load_string("""
 <ScreenHeader@GuiLabel>:
     size_hint: 1, None
-    height: dp(32)
-    font_size: dp(16)
-    text_size: self.width - dp(18), self.height - dp(4)
+    height: 32 * self.dp
+    font_size: 16 * self.dp
+    text_size: self.width - 18 * self.dp, self.height - 4 * self.dp
     halign: 'left'
     valign: 'bottom'
     canvas.before:
@@ -133,6 +168,6 @@ Builder.load_string("""
             rgba: 245./255, 222./255, 84./255, 1
         Rectangle:
             group: 'bar'
-            size: self.width, dp(3)
-            pos: self.x, self.y + dp(1)
+            size: self.width, 3 * self.dp
+            pos: self.x, self.y + 1 * self.dp
 """)
