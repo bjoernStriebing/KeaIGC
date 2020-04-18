@@ -224,6 +224,16 @@ class FlightListScreen(Screen):
         self._last_press = [0, None]
         self._clear_cb_set = False
 
+    def on_parent(self, *args):
+        default_pilot = Config.get('user', 'pilot_name')
+        default_wing = Config.get('user', 'wing_name')
+        if default_pilot:
+            self.ids.pilot_name.text = default_pilot.strip()
+            self.ids.replace_pilot.selected = True
+        if default_wing:
+            self.ids.glider_name.text = default_wing.strip()
+            self.ids.replace_glider.selected = True
+
     def on_enter(self, **kwargs):
         super(FlightListScreen, self).on_pre_enter(**kwargs)
         if isinstance(self.manager.last_screen, SettingsScreen):
@@ -240,8 +250,9 @@ class FlightListScreen(Screen):
 
     def fill_meta(self):
         gps = self.manager.gps.gps
-        self.ids.pilot_name.text = str(gps.pilot_name)
-        self.ids.replace_pilot.selected = True
+        if not Config.get('user', 'pilot_name'):
+            self.ids.pilot_name.text = str(gps.pilot_name)
+            self.ids.replace_pilot.selected = True
 
     @mainthread
     def add_flights(self, flight_queue):

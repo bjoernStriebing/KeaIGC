@@ -10,6 +10,7 @@ from kivy.config import Config, ConfigParser
 from kivy.metrics import *
 
 from .common import GuiLabel, GuiButton, GuiGridLayout
+from .popups.message import MessagePopup
 import gpsdevice
 
 
@@ -50,12 +51,37 @@ class SettingsScreen(Screen):
                     "desc": "Talk to evry available serial port to find GPS device automatically",
                     "section": "user",
                     "key": "auto_detect_ports"
+                },
+                {
+                    "type": "string",
+                    "title": "Default pilot name",
+                    "desc": "Overwrite pilot name reported by GPS. Leave blank to disable.",
+                    "section": "user",
+                    "key": "pilot_name"
+                },
+                {
+                    "type": "string",
+                    "title": "Default glider name",
+                    "desc": "Overwrite glider name reported by GPS. Leave blank to disable.",
+                    "section": "user",
+                    "key": "wing_name"
                 }
             ]
             """)
         self.ids.settings_box.add_widget(settings)
+        self._settings = settings
 
     def close(self):
+        for setting in self._settings.interface.current_panel.children:
+            try:
+                setting._validate(setting)
+            except AttributeError:
+                continue
+
+        try:
+            Config.write()
+        except IOError as e:
+            MessagePopup('Could not save settings due to an error:\n{}'.format(e))
         self.manager.current = self.manager.last_screen.name
 
 
@@ -70,7 +96,7 @@ class GuiSettings(SettingsWithNoMenu):
         self._types = {}
         super(Settings, self).__init__(*args, **kwargs)
         self.add_interface()
-        # self.register_type('string', SettingString)
+        self.register_type('string', GuiSettingString)
         self.register_type('bool', GuiSettingBoolean)
         # self.register_type('numeric', SettingNumeric)
         # self.register_type('options', SettingOptions)
@@ -169,6 +195,15 @@ Builder.load_string("""
         pos: root.pos
         active: bool(root.values.index(root.value)) if root.value in root.values else False
         on_active: root.value = root.values[int(args[1])]
+
+<GuiSettingString>:
+    GuiTextInput:
+        id: textinput
+        text: root.value or ''
+        pos_hint: {'right': 1, 'center_y': .5}
+        # pos: root.pos
+        on_text_validate: root._validate(self)
+        on_focus: root._validate(self) if not self.focus else None
 """)
 
 
@@ -182,3 +217,18 @@ class GuiSettingItem(SettingItem):
 
 class GuiSettingBoolean(GuiSettingItem, SettingBoolean):
     pass
+
+
+class GuiSettingString(GuiSettingItem):
+
+    def on_panel(self, instance, value):
+        if value is None:
+            return
+        self.fbind('on_release', lambda x: self._focus())
+
+    def _validate(self, instance):
+        value = self.ids.textinput.text.strip()
+        self.value = value
+
+    def _focus(self):
+        self.ids.textinput.focus = True

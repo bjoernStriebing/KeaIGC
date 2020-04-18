@@ -27,6 +27,7 @@ Builder.load_string("""
 class GuiColor(Widget):
     pass
 
+
 Builder.load_string("""
 <GuiButton>:
     size_hint: 1, None

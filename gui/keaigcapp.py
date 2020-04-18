@@ -25,7 +25,9 @@ from . import animation
 from .common import GuiColor, GuiImgButton
 
 Config.set('kivy', 'exit_on_escape', '0')
-Config.setdefaults('user', {'auto_detect_ports': None})
+Config.setdefaults('user', {'auto_detect_ports': None,
+                            'pilot_name': '',
+                            'wing_name': ''})
 
 Builder.load_string("""
 <RootWidget>:
