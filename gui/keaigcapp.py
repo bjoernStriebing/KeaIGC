@@ -6,28 +6,34 @@ from serial import SerialException
 from kivy.app import App
 from kivy.clock import Clock, mainthread
 from kivy.config import Config
-from kivy.core.window import Window
 from kivy.lang.builder import Builder
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager
 from kivy.uix.relativelayout import RelativeLayout
 
-from igc import save as igc_save
-from .gpsclassscreen import GpsClassScreen
-from .serialscreen import SerialScreen
-from .flightlistscreen import FlightListScreen
-from .settingsscreen import SettingsScreen
-from .popups.message import MessagePopup
-from .popups.confirm import ConfirmPopup
-
-from . import animation
-from .common import GuiColor, GuiImgButton
-from .metrics import update_metrics
-
 Config.set('kivy', 'exit_on_escape', '0')
+try:
+    Config.get('user', 'auto_detect_ports')
+except Exception:
+    Config.set('graphics', 'height', 800)
+    Config.set('graphics', 'width', 800)
 Config.setdefaults('user', {'auto_detect_ports': None,
                             'pilot_name': '',
                             'wing_name': ''})
+
+from kivy.core.window import Window                                     # nopep8
+
+from igc import save as igc_save                                        # nopep8
+from .gpsclassscreen import GpsClassScreen                              # nopep8
+from .serialscreen import SerialScreen                                  # nopep8
+from .flightlistscreen import FlightListScreen                          # nopep8
+from .settingsscreen import SettingsScreen                              # nopep8
+from .popups.message import MessagePopup                                # nopep8
+from .popups.confirm import ConfirmPopup                                # nopep8
+from .common import GuiColor, GuiImgButton                              # nopep8
+from .metrics import update_metrics, metric                             # nopep8
+from . import animation                                                 # nopep8
+
 
 Builder.load_string("""
 <RootWidget>:
@@ -195,7 +201,10 @@ class KeaIgcApp(App):
         Window.bind(on_request_close=self.on_request_close)
         return self.root_widget
 
-    def on_request_close(self, *args):
+    def on_request_close(self, window, *args):
+        w, h = map(lambda d: int(d / metric.dp), window.size)
+        Config.set('graphics', 'height', h)
+        Config.set('graphics', 'width', w)
         try:
             Config.write()
         except Exception:

@@ -12,7 +12,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import ListProperty, ObjectProperty
 
-from .common import GuiLabel, GuiButton, GuiSelsectButton, GuiTextInput, GuiGridLayout, GuiMetric
+from .common import GuiLabel, GuiButton, GuiSelsectButton, GuiContainerSelectButton, GuiTextInput, GuiGridLayout, GuiMetric
 from .settingsscreen import SettingsScreen
 from .contrib.gardenmapview import MapView, MapMarkerPopup
 from . import animation
@@ -263,12 +263,29 @@ class FlightListScreen(Screen, GuiMetric):
         self.manager.busy_progress(progress)
         if progress < 1.0:
             Clock.schedule_once(lambda dt: self.add_flights(flight_queue), .02)
+
         # add a button for the flight
-        date_str = utc_to_local(flight.datetime).strftime("%A\n%d %b %Y\n%H:%M")
-        button = GuiSelsectButton(text=date_str, data={'num': flight.num})
+        flightdate = utc_to_local(flight.datetime)
+        button = GuiContainerSelectButton(data={'num': flight.num})
         button.bind(on_release=lambda x, n=flight.num:
                     Clock.schedule_once(lambda dt: self.manager.download_flight_header(n)))
         button.bind(on_press=lambda x: self.select_one(x))
+
+        button.add_widget(GuiLabel(text=flightdate.strftime("%d %b %Y\n%A"),
+                                   size_hint=(.31, 1),
+                                   pos_hint={'x': 0.02, 'y': 0},
+                                   bg_colour=(1, 1, 1, 0),
+                                   halign='left'))
+        button.add_widget(GuiLabel(text=flightdate.strftime("%H:%M"),
+                                   size_hint=(.34, 1),
+                                   pos_hint={'x': .33, 'y': 0},
+                                   bg_colour=(1, 1, 1, 0),
+                                   halign='center'))
+        button.add_widget(GuiLabel(text=str(flight.duration),
+                                   size_hint=(.31, 1),
+                                   pos_hint={'x': .67, 'y': 0},
+                                   bg_colour=(1, 1, 1, 0),
+                                   halign='right'))
         self.ids.list_bl.add_widget(button)
 
     def go_back(self, *largs):

@@ -5,7 +5,7 @@ import threading
 from string import printable
 from serial import SerialException
 from collections import Iterable
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import reduce
 
 from gpsdevice.gpsmisc import *
@@ -34,7 +34,7 @@ class ResponseList(Struct):
         self.num = int(num)
         self.datetime = datetime.strptime(' '.join([date.decode(), time.decode()]),
                                           '%d.%m.%y %H:%M:%S')
-        self.duration = timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
+        self.duration = FlightDuration(hours=t.hour, minutes=t.minute, seconds=t.second)
 
 
 class NMEAResponse(object):

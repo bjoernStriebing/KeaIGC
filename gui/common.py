@@ -6,6 +6,7 @@ from kivy.uix.button import Button
 from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.image import Image
 from kivy.properties import BooleanProperty, NumericProperty, ObjectProperty
@@ -72,6 +73,29 @@ class GuiSelsectButton(GuiButton):
             self.parent.update_selected(self, selected)
         except AttributeError:
             pass
+
+
+Builder.load_string("""
+<-GuiContainerButton>:
+    size_hint: 1, None
+    height: 60 * self.dp
+    background_normal: "gui/img/g85.png"
+    background_down: "gui/img/highlightColour.png"
+    Image:
+        size: root.size
+        pos_hint: {'x': 0, 'y': 0}
+        source: root.background_normal if root.state == 'normal' else root.background_down
+        allow_stretch: True
+        keep_ratio: False
+""")
+
+
+class GuiContainerButton(ButtonBehavior, FloatLayout, GuiMetric):
+    data = ObjectProperty(None)
+
+
+class GuiContainerSelectButton(GuiContainerButton, GuiSelsectButton):
+    pass
 
 
 class GuiImgButton(ButtonBehavior, Image, GuiMetric):
