@@ -3,8 +3,6 @@ from . import vali
 
 __all__ = ['save']
 
-save = None
-
 
 class open_igc_save():
 

@@ -16,8 +16,8 @@ class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
     MANUFACTURER_NAMES = ["Flymaster"]
     MODEL_NAMES = ["ANY"]
     BAUDRATE = 57600
-    # _set_nav_off = GpsCommand('PFMDNL', response=False)
-    # _set_nav_on = GpsCommand('PFMNAV', response=False)
+    _set_nav_off = GpsCommand('PFMDNL', response=False)
+    _set_nav_on = GpsCommand('PFMNAV', response=False)
     _set_pwoff = GpsCommand('PFMOFF', response=False)
     _get_id = GpsCommand('PFMSNP')
     _get_list = GpsCommand('PFMDNL', data=['LST'])
