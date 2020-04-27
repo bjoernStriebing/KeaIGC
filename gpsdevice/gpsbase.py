@@ -95,6 +95,8 @@ class GpsCommand(object):
 
     def __str__(self):
         """Compose the NMEA message with data fiels and calculate checksum."""
+        if self.command is None:
+            return None
         cmd_str = self.command + ','
         if self.data is not None:
             cmd_str += ','.join(map(str, self.data))
@@ -112,6 +114,18 @@ class GpsDeviceBase(object):
     Offers basic send, and receive methods to communicate with the GPS device
     via serial port.
     """
+
+    GUI_NAME = "GENERIC"            # Interface Identifier in the GUI
+    MANUFACTURER_NAMES = ["ANY"]    # Possible manufacturer names the GPS device may identify itself with
+    MODEL_NAMES = ["ANY"]           # Possible model names the GPS device may identify itself with
+    BAUDRATE = 115200
+    # dummy commands
+    _set_nav_off = GpsCommand(None, response=False, data='_set_nav_off')
+    _set_nav_on = GpsCommand(None, response=False, data='_set_nav_on')
+    _set_pwoff = GpsCommand(None, response=False, data='_set_pwoff')
+    _get_id = GpsCommand(None, response=False, data='_get_id')
+    _get_list = GpsCommand(None, response=False, data='_get_list')
+    _get_flight = GpsCommand(None, response=False, data='_get_flight')
 
     def __init__(self, port, **kwargs):
         """Initialise GPS device base class via serial port."""
@@ -246,7 +260,11 @@ class GpsDeviceBase(object):
                 command.data += data
             except TypeError:
                 command.data = data
-        cmd_str = str(command)
+        try:
+            cmd_str = str(command)
+        except TypeError:
+            logger.warning('{} does not implement command {}'.format(type(self), command.data))
+            return
         self.mode = command.mode
         logger.info('{} send command: {}'.format(self.__class__.__name__, cmd_str))
         if command.response:
@@ -320,10 +338,10 @@ class GpsDeviceBase(object):
             print('{:3.0f}%'.format(self.progress * 100), response)
 
     def validate_id(self):
-        if self.manufacturer not in self.MANUFACTURER_NAMES:
+        if self.manufacturer not in self.MANUFACTURER_NAMES and 'ANY' not in self.MANUFACTURER_NAMES:
             raise ValueError('Manufacturer "{}" does not match {} GPS device.'.format(
                 self.manufacturer, self.GUI_NAME))
-        if self.model not in self.MODEL_NAMES or self.MODEL_NAMES == 'ANY':
+        if self.model not in self.MODEL_NAMES and 'ANY' not in self.MODEL_NAMES:
             raise ValueError('Model {} does not match {} GPS device.'.format(
                 self.model, self.GUI_NAME))
 

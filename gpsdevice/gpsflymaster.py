@@ -6,19 +6,19 @@ from gpsdevice.gpsmisc import *
 
 
 class ConstantsFlymaster(object):
-    GUI_NAME = "Flymaster"
-    MANUFACTURER_NAMES = ["Flymaster"]
-    MODEL_NAMES = ["GpsSD"]
-    BAUDRATE = 57600
     EPOCH2000 = 946684800
     RADIANTS = 60000.0
 
 
 class GpsFlymaster(GpsDeviceBase, ConstantsFlymaster):
 
-    _set_nav_off = GpsCommand('PFMDNL', response=False)
-    _set_nav_on = GpsCommand('PFMNAV', response=False)
-    _set_pwoff = GpsCommand('PFMOFF')
+    GUI_NAME = "Flymaster"
+    MANUFACTURER_NAMES = ["Flymaster"]
+    MODEL_NAMES = ["ANY"]
+    BAUDRATE = 57600
+    # _set_nav_off = GpsCommand('PFMDNL', response=False)
+    # _set_nav_on = GpsCommand('PFMNAV', response=False)
+    _set_pwoff = GpsCommand('PFMOFF', response=False)
     _get_id = GpsCommand('PFMSNP')
     _get_list = GpsCommand('PFMDNL', data=['LST'])
     _get_flight = GpsCommand('PFMDNL', mode='BIN')

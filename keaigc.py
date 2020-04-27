@@ -18,6 +18,9 @@ if __name__ == '__main__':
                               Downloaded IGC files won't be signed.")
     parser.add_argument('--cmd', dest='cmd', action='store_true',
                         help="Don't show the GUI - use command line interface.")
+    parser.add_argument('--open-lib', dest='open_lib', action='store_true',
+                        help="Use open igc writer class instead of private lib\n\
+                              Downloaded IGC files won't be signed.")
     parser.add_argument('-g', '--gps', dest='gps', type=str,
                         metavar='class', default='<NOT SET>',
                         help="GPS device class")
@@ -39,8 +42,11 @@ if __name__ == '__main__':
     args, unknown = parser.parse_known_args()
     sys.argv[1:] = unknown
 
+    # set up GPS device and IGC signing modules
     import gpsdevice
+    import igc
     gpsdevice.import_lib(developer=args.dev)
+    igc.import_lib(open_lib=args.open_lib)
 
     if not args.cmd:
         """Run the GUI app"""

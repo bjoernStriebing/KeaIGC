@@ -289,9 +289,6 @@ class MapViewScatter(Scatter):
                              post_multiply=True,
                              anchor=self.to_local(*self.center))
 
-    def on_scale(self, instance, scale):
-        print('on scale', scale)
-
 
 class MapView(Widget):
     """MapView is the widget that control the map displaying, navigation, and
