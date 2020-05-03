@@ -4,6 +4,9 @@ A simple and intuitive interface to download .igc files from your flight recorde
 Open source - if you have an instrument which is currently not supported I invite you to add to this project. \
 ***Note: that is anything that isn't a Flymaster at the moment, sorry!***
 
+***The FAI is currently not approving open source IGC signing software. You can still download and Kea IGC Forager but any IGC files saved won't be accepted by scoring systems. \
+Development is cuccrently on hold until open source IGC signing is may be approved again.***
+
 ### Available for
 - [x] Mac OSX
 - [ ] Linux
